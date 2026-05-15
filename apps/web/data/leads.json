@@ -1,0 +1,297 @@
+{
+  "leads": [
+    {
+      "id": "lead_6ae1e985-3653-4482-8a75-1c1053050677",
+      "createdAt": "2026-05-08T20:41:04.432Z",
+      "updatedAt": "2026-05-08T20:41:04.432Z",
+      "source": "website",
+      "customerType": "private",
+      "interests": [
+        "unknown"
+      ],
+      "urgency": "information",
+      "hasInvoice": "unknown",
+      "monthlyEnergyCosts": "unknown",
+      "ownsProperty": "unknown",
+      "firstName": "Karl",
+      "lastName": "Test",
+      "email": "karl@example.com",
+      "postalCode": "20095",
+      "legalBasis": "consent",
+      "consent": {
+        "contactConsent": true,
+        "privacyAccepted": true,
+        "consentTextVersion": "2025-01-01",
+        "consentTimestamp": "2026-05-08T20:41:04.432Z",
+        "source": "seed"
+      },
+      "leadScore": 0,
+      "leadColor": "gray",
+      "leadLabel": "Niedrige Priorität",
+      "scoreReasons": [
+        {
+          "code": "urgency_information",
+          "label": "Nur Informationsphase",
+          "delta": -15
+        },
+        {
+          "code": "postal_code",
+          "label": "Postleitzahl vorhanden",
+          "delta": 10
+        }
+      ],
+      "recommendedAction": "Nicht priorisieren. Es fehlen wichtige Angaben (z.B. Telefon, Dringlichkeit oder Verbrauch).",
+      "status": "Neu",
+      "notes": [],
+      "contactHistory": [],
+      "files": [],
+      "isDemo": true
+    },
+    {
+      "id": "lead_8dea2ab8-62c9-4ca6-ab31-a55ac71171d2",
+      "createdAt": "2026-05-08T20:41:04.432Z",
+      "updatedAt": "2026-05-08T20:41:04.432Z",
+      "source": "website",
+      "customerType": "business",
+      "interests": [
+        "strom_gas"
+      ],
+      "urgency": "weeks",
+      "hasInvoice": "later",
+      "monthlyEnergyCosts": "200_400",
+      "ownsProperty": "business_property",
+      "contactPreference": "phone",
+      "firstName": "Bäckerei",
+      "lastName": "Müller GmbH",
+      "phone": "+49 89 7654321",
+      "email": "kontakt@baeckerei-mueller.example",
+      "postalCode": "80331",
+      "city": "München",
+      "legalBasis": "consent",
+      "consent": {
+        "contactConsent": true,
+        "privacyAccepted": true,
+        "consentTextVersion": "2025-01-01",
+        "consentTimestamp": "2026-05-08T20:41:04.432Z",
+        "source": "seed"
+      },
+      "leadScore": 120,
+      "leadColor": "red",
+      "leadLabel": "Sofort-Abschluss möglich",
+      "scoreReasons": [
+        {
+          "code": "business",
+          "label": "Gewerbekunde",
+          "delta": 35
+        },
+        {
+          "code": "strom_gas_combo",
+          "label": "Strom und Gas kombiniert",
+          "delta": 20
+        },
+        {
+          "code": "invoice_later",
+          "label": "Rechnung wird nachgereicht",
+          "delta": 15
+        },
+        {
+          "code": "urgency_weeks",
+          "label": "Entscheidung in den nächsten Wochen",
+          "delta": 20
+        },
+        {
+          "code": "cost_200_400",
+          "label": "Hohe monatliche Energiekosten",
+          "delta": 25
+        },
+        {
+          "code": "phone_present",
+          "label": "Telefonnummer vorhanden",
+          "delta": 20
+        },
+        {
+          "code": "prefers_phone",
+          "label": "Telefonische Kontaktaufnahme bevorzugt",
+          "delta": 20
+        },
+        {
+          "code": "postal_code",
+          "label": "Postleitzahl vorhanden",
+          "delta": 10
+        }
+      ],
+      "recommendedAction": "Innerhalb von 15 Minuten anrufen. Gewerbekunde mit Interesse an Strom und Gas, gewerbekunde, strom und gas kombiniert, rechnung wird nachgereicht.",
+      "status": "Neu",
+      "notes": [],
+      "contactHistory": [],
+      "files": [],
+      "isDemo": true
+    },
+    {
+      "id": "lead_cae21076-d4b0-4273-8c25-5fc3caef095b",
+      "createdAt": "2026-05-08T20:41:04.431Z",
+      "updatedAt": "2026-05-08T20:41:04.431Z",
+      "source": "website",
+      "customerType": "home_owner",
+      "interests": [
+        "photovoltaik"
+      ],
+      "urgency": "immediate",
+      "hasInvoice": "upload_now",
+      "monthlyEnergyCosts": "over_400",
+      "ownsProperty": "yes",
+      "contactPreference": "phone",
+      "firstName": "Anna",
+      "lastName": "Berger",
+      "phone": "+49 30 1234567",
+      "email": "anna.berger@example.com",
+      "postalCode": "10115",
+      "city": "Berlin",
+      "legalBasis": "consent",
+      "consent": {
+        "contactConsent": true,
+        "privacyAccepted": true,
+        "consentTextVersion": "2025-01-01",
+        "consentTimestamp": "2026-05-08T20:41:04.431Z",
+        "source": "seed"
+      },
+      "leadScore": 120,
+      "leadColor": "red",
+      "leadLabel": "Sofort-Abschluss möglich",
+      "scoreReasons": [
+        {
+          "code": "pv_interest",
+          "label": "Photovoltaik-Interesse erkannt",
+          "delta": 25
+        },
+        {
+          "code": "home_owner",
+          "label": "Hauseigentümer mit potenzieller Dachfläche",
+          "delta": 30
+        },
+        {
+          "code": "invoice_upload",
+          "label": "Rechnung wird hochgeladen",
+          "delta": 35
+        },
+        {
+          "code": "urgency_immediate",
+          "label": "Schnelle Wechselabsicht",
+          "delta": 30
+        },
+        {
+          "code": "cost_over_400",
+          "label": "Sehr hohe monatliche Energiekosten",
+          "delta": 35
+        },
+        {
+          "code": "phone_present",
+          "label": "Telefonnummer vorhanden",
+          "delta": 20
+        },
+        {
+          "code": "prefers_phone",
+          "label": "Telefonische Kontaktaufnahme bevorzugt",
+          "delta": 20
+        },
+        {
+          "code": "postal_code",
+          "label": "Postleitzahl vorhanden",
+          "delta": 10
+        }
+      ],
+      "recommendedAction": "Innerhalb von 15 Minuten anrufen. Eigentümer mit Interesse an Photovoltaik, photovoltaik-interesse erkannt, hauseigentümer mit potenzieller dachfläche, rechnung wird hochgeladen.",
+      "status": "Neu",
+      "notes": [],
+      "contactHistory": [],
+      "files": [],
+      "isDemo": true
+    }
+  ],
+  "research": [],
+  "audit": [
+    {
+      "id": "aud_f863ae23-560a-438a-a1d4-4d8cf9f0c0ba",
+      "createdAt": "2026-05-11T11:25:53.221Z",
+      "actorId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "actorRole": "admin",
+      "action": "auth.login_success",
+      "entity": "auth",
+      "entityId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "ipHash": "a489478d4d52a5d57d4e0f09"
+    },
+    {
+      "id": "aud_cd984716-e844-4f7e-89ff-e26808023fce",
+      "createdAt": "2026-05-08T21:11:26.803Z",
+      "actorId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "actorRole": "admin",
+      "action": "auth.login_success",
+      "entity": "auth",
+      "entityId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "ipHash": "a489478d4d52a5d57d4e0f09"
+    },
+    {
+      "id": "aud_1b5d0736-e386-4061-9972-a29a1588dbb3",
+      "createdAt": "2026-05-08T21:07:25.089Z",
+      "actorId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "actorRole": "admin",
+      "action": "auth.login_success",
+      "entity": "auth",
+      "entityId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "ipHash": "a489478d4d52a5d57d4e0f09"
+    },
+    {
+      "id": "aud_a1237deb-ecc7-483d-9703-cf307c1673ed",
+      "createdAt": "2026-05-08T21:02:49.448Z",
+      "actorId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "actorRole": "admin",
+      "action": "auth.login_success",
+      "entity": "auth",
+      "entityId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "ipHash": "a489478d4d52a5d57d4e0f09"
+    },
+    {
+      "id": "aud_a392da3d-b89f-46aa-b1d6-a17c19b95d02",
+      "createdAt": "2026-05-08T20:47:41.860Z",
+      "actorId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "actorRole": "admin",
+      "action": "auth.login_success",
+      "entity": "auth",
+      "entityId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "ipHash": "a489478d4d52a5d57d4e0f09"
+    },
+    {
+      "id": "aud_da5efc53-a1d7-4c9b-a376-9418b8e91446",
+      "createdAt": "2026-05-08T20:46:55.155Z",
+      "actorId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "actorRole": "admin",
+      "action": "auth.login_success",
+      "entity": "auth",
+      "entityId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "ipHash": "a489478d4d52a5d57d4e0f09"
+    },
+    {
+      "id": "aud_85b63e30-ef8e-4f19-b49c-edd3d3a5ed0b",
+      "createdAt": "2026-05-08T20:45:23.893Z",
+      "actorId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "actorRole": "admin",
+      "action": "auth.login_success",
+      "entity": "auth",
+      "entityId": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "ipHash": "a489478d4d52a5d57d4e0f09"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr_b6c1b82f-13e0-43a2-ad5f-46bb3ff7d421",
+      "email": "admin@example.com",
+      "name": "Admin",
+      "role": "admin",
+      "passwordHash": "$argon2id$v=19$m=19456,t=2,p=1$32F7/wnasDHPJRTB76uRYg$1L3OSbhMLjs5rOUPb1MZ7mrJM3w3htNqLOYzL6MlOI4",
+      "createdAt": "2026-05-08T20:41:04.429Z",
+      "failedLoginCount": 0,
+      "lastLoginAt": "2026-05-11T11:25:53.208Z"
+    }
+  ],
+  "events": []
+}

@@ -1,0 +1,479 @@
+'use client';
+
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button, OptionCard, Field, Checkbox } from '@elo/ui';
+import { WizardInstantEstimate } from '@/components/funnel/WizardInstantEstimate';
+import { funnelConfig, visibleSteps } from '@/lib/funnel/config';
+import { audienceFromState } from '@/lib/funnel/audience';
+import { CONSENT_TEXTS, CONSENT_VERSION } from '@/lib/consent';
+import { submitLead } from '@/app/actions/submitLead';
+import type { AnswerState, FunnelStep, Interest } from '@elo/core';
+
+const STORAGE_KEY = 'elo_funnel_state_v1';
+
+function isFilled(s: AnswerState, step: FunnelStep): boolean {
+  if (step.type === 'contact') {
+    return Boolean(s.firstName && s.lastName && s.postalCode && (s.phone || s.email));
+  }
+  if (step.type === 'consent') {
+    return Boolean(s.contactConsent && s.privacyAccepted);
+  }
+  if (!step.field) return true;
+  const v = s[step.field];
+  return v !== undefined && v !== '' && (Array.isArray(v) ? v.length > 0 : true);
+}
+
+export function EnergyCheckWizard() {
+  const router = useRouter();
+  const [state, setState] = useState<AnswerState>({});
+  const [stepIdx, setStepIdx] = useState(0);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const startedAt = useRef<number>(Date.now());
+  const hydrated = useRef(false);
+
+  // Einmalig: Session wiederherstellen + fromInvoice (kein useSearchParams-Loop, der State überschreibt)
+  useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw) as { state: AnswerState; idx: number };
+        setState(obj.state ?? {});
+        setStepIdx(typeof obj.idx === 'number' && obj.idx >= 0 ? obj.idx : 0);
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      if (qs.get('fromInvoice') === '1') {
+        setState((prev) => ({ ...prev, hasInvoice: 'upload_now' }));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ state, idx: stepIdx }));
+  }, [state, stepIdx]);
+
+  const audience = audienceFromState(state);
+  const steps = useMemo(() => visibleSteps(state, audience), [state, audience]);
+  const total = steps.length;
+  const safeIdx = Math.min(stepIdx, total - 1);
+  const step = steps[safeIdx]!;
+  const completedSteps = safeIdx + (isFilled(state, step) ? 1 : 0);
+  const progress = completedSteps / total;
+  const canNext = isFilled(state, step);
+  const isLast = safeIdx === total - 1;
+  const minutesLeft = Math.max(1, Math.ceil((total - safeIdx) * 0.3));
+
+  function setField<K extends keyof AnswerState>(key: K, value: AnswerState[K]) {
+    setState((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function next() {
+    setError(null);
+    if (safeIdx < total - 1) {
+      setStepIdx(safeIdx + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      handleSubmit();
+    }
+  }
+
+  function back() {
+    setError(null);
+    if (safeIdx > 0) {
+      setStepIdx(safeIdx - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function handleSubmit() {
+    if (!canNext) return;
+    const elapsed = Date.now() - startedAt.current;
+    const fd = new FormData();
+    fd.set(
+      'payload',
+      JSON.stringify({
+        state,
+        consentTextVersion: CONSENT_VERSION,
+        submittedAtMs: elapsed,
+      }),
+    );
+    startTransition(async () => {
+      const res = await submitLead(fd);
+      if (res.ok) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        router.push('/danke');
+      } else {
+        setError(res.error ?? 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.');
+      }
+    });
+  }
+
+  // Tastatur-Shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === 'ArrowRight' && canNext) next();
+      if (e.key === 'ArrowLeft' && safeIdx > 0) back();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canNext, safeIdx]);
+
+  return (
+    <div className="relative">
+      {/* Sticky Wizard-Header mit Schritt-Indikator */}
+      <div className="sticky top-[60px] sm:top-16 z-20 bg-softWhite/90 backdrop-blur border-b border-borderLight">
+        <div className="mx-auto max-w-2xl px-5 py-3">
+          <div className="flex items-center justify-between text-[12.5px] text-muted">
+            <span className="font-medium text-ink2">
+              Schritt {safeIdx + 1} von {total}
+            </span>
+            <span>ca. {minutesLeft} Min. übrig</span>
+          </div>
+          <StepDots total={total} idx={safeIdx} done={completedSteps} />
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-2xl px-5 pt-8 pb-32 sm:pb-16">
+        {/* Eyebrow */}
+        <p className="text-[11.5px] uppercase tracking-[0.16em] text-sage font-medium">
+          Energie-Check · {Math.round(progress * 100)}% erledigt
+        </p>
+
+        <h1 className="mt-3 font-display text-[26px] sm:text-[34px] leading-[1.12] tracking-[-0.012em] text-ink">
+          {step.question}
+        </h1>
+        {step.helpText && (
+          <p className="mt-3 text-[15.5px] text-ink2 leading-relaxed">{step.helpText}</p>
+        )}
+
+        {(step.id === 'interests' || step.id === 'hasInvoice') && (
+          <WizardInstantEstimate
+            key={step.id}
+            interestHint={state.interests?.[0] ?? null}
+          />
+        )}
+
+        <div
+          className={
+            step.id === 'interests' || step.id === 'hasInvoice' ? 'mt-5 grid gap-3' : 'mt-7 grid gap-3'
+          }
+          aria-live="polite"
+        >
+          {(step.type === 'single_choice' || step.type === 'multi_choice') && step.options && (
+            <div role="radiogroup" aria-label={step.question} className="grid gap-2.5 relative z-10">
+              {step.options.map((o: { id: string; label: string; description?: string }) => {
+                const sel = isOptionSelected(state, step, o.id);
+                return (
+                  <OptionCard
+                    key={o.id}
+                    label={o.label}
+                    description={o.description}
+                    selected={sel}
+                    onClick={() => onPickOption(setState, step, o.id)}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {step.type === 'contact' && <ContactFields state={state} setField={setField} />}
+          {step.type === 'consent' && <ConsentFields state={state} setField={setField} />}
+        </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="mt-5 rounded-elo border border-leadRed/40 bg-leadRed/5 px-4 py-3 text-[14px] text-leadRed"
+          >
+            {error}
+          </div>
+        )}
+
+        {/* Desktop-Aktionen */}
+        <div className="mt-9 hidden sm:flex items-center justify-between gap-3">
+          <Button variant="ghost" size="lg" onClick={back} disabled={safeIdx === 0}>
+            ← Zurück
+          </Button>
+          <div className="flex items-center gap-4">
+            {!canNext && (
+              <span className="text-[13px] text-muted">
+                {step.type === 'contact'
+                  ? 'Bitte mindestens Name, PLZ und Telefon oder E-Mail.'
+                  : 'Bitte eine Option auswählen.'}
+              </span>
+            )}
+            <Button
+              variant="primary"
+              size="xl"
+              onClick={next}
+              disabled={!canNext || isPending}
+            >
+              {isLast
+                ? isPending
+                  ? 'Wird gesendet…'
+                  : 'Energie-Check absenden'
+                : 'Weiter →'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Vertrauens-Strip unter Aktionen (Desktop) */}
+        <TrustStrip />
+      </div>
+
+      {/* Sticky Mobile-Aktionen */}
+      <div className="sm:hidden fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 backdrop-blur">
+        <div className="px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={back}
+              disabled={safeIdx === 0}
+              className="h-12 px-4 rounded-elo border border-line bg-card text-[14px] text-ink2 disabled:opacity-40"
+            >
+              ← Zurück
+            </button>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={next}
+              disabled={!canNext || isPending}
+              fullWidth
+            >
+              {isLast
+                ? isPending
+                  ? 'Wird gesendet…'
+                  : 'Absenden'
+                : 'Weiter →'}
+            </Button>
+          </div>
+          <p className="mt-2 text-center text-[11.5px] text-muted">
+            DSGVO · Verarbeitung in Deutschland
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepDots({ total, idx, done }: { total: number; idx: number; done: number }) {
+  return (
+    <div
+      className="mt-2 flex items-center gap-1.5"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-valuenow={done}
+    >
+      {Array.from({ length: total }).map((_, i) => {
+        const state = i < idx ? 'done' : i === idx ? 'active' : 'pending';
+        const cls =
+          state === 'done'
+            ? 'bg-sage'
+            : state === 'active'
+              ? 'bg-sage'
+              : 'bg-line';
+        return (
+          <span
+            key={i}
+            aria-hidden
+            className={`h-1.5 flex-1 rounded-full ${cls} transition-colors`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function TrustStrip() {
+  return (
+    <div className="mt-10 pt-6 border-t border-line grid grid-cols-1 sm:grid-cols-3 gap-3 text-[13px] text-muted">
+      <span className="inline-flex items-center gap-2">
+        <Dot /> Ca. 2 Minuten · jederzeit zurück
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <Dot /> Lokale Speicherung in dieser Sitzung
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <Dot /> DSGVO ·{' '}
+        <Link href="/datenschutz" className="underline underline-offset-4 hover:text-ink">
+          Datenschutz
+        </Link>
+      </span>
+    </div>
+  );
+}
+
+function Dot() {
+  return <span aria-hidden className="size-1.5 rounded-full bg-sage shrink-0" />;
+}
+
+function isOptionSelected(s: AnswerState, step: FunnelStep, optionId: string): boolean {
+  if (!step.field) return false;
+  const v = s[step.field];
+  if (step.id === 'interests') {
+    return (Array.isArray(v) ? v[0] : undefined) === optionId;
+  }
+  return v === optionId;
+}
+
+function onPickOption(
+  setState: Dispatch<SetStateAction<AnswerState>>,
+  step: FunnelStep,
+  optionId: string,
+) {
+  if (!step.field) return;
+  if (step.id === 'interests') {
+    setState((prev) => ({ ...prev, interests: [optionId as Interest] }));
+  } else {
+    setState((prev) => ({ ...prev, [step.field!]: optionId } as AnswerState));
+  }
+}
+
+function ContactFields({
+  state,
+  setField,
+}: {
+  state: AnswerState;
+  setField: <K extends keyof AnswerState>(k: K, v: AnswerState[K]) => void;
+}) {
+  return (
+    <div className="grid gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Field
+          label="Vorname"
+          autoComplete="given-name"
+          value={state.firstName ?? ''}
+          onChange={(e) => setField('firstName', e.target.value)}
+          required
+        />
+        <Field
+          label="Nachname"
+          autoComplete="family-name"
+          value={state.lastName ?? ''}
+          onChange={(e) => setField('lastName', e.target.value)}
+          required
+        />
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Field
+          label="Telefon"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          hint="Schnellster Weg zur Auswertung"
+          value={state.phone ?? ''}
+          onChange={(e) => setField('phone', e.target.value)}
+        />
+        <Field
+          label="E-Mail"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          hint="Bitte mindestens Telefon oder E-Mail."
+          value={state.email ?? ''}
+          onChange={(e) => setField('email', e.target.value)}
+        />
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Field
+          label="Postleitzahl"
+          inputMode="numeric"
+          autoComplete="postal-code"
+          maxLength={5}
+          value={state.postalCode ?? ''}
+          onChange={(e) =>
+            setField('postalCode', e.target.value.replace(/\D/g, '').slice(0, 5))
+          }
+          required
+        />
+        <Field
+          label="Ort (optional)"
+          autoComplete="address-level2"
+          value={state.city ?? ''}
+          onChange={(e) => setField('city', e.target.value)}
+        />
+      </div>
+      <p className="text-[12.5px] text-muted leading-snug">
+        Wir verwenden Ihre Daten ausschließlich zur Auswertung. Keine Weitergabe an Dritte.
+      </p>
+      {/* Honeypot */}
+      <div className="elo-hp" aria-hidden>
+        <label>
+          Website
+          <input type="text" name="website_url" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function ConsentFields({
+  state,
+  setField,
+}: {
+  state: AnswerState;
+  setField: <K extends keyof AnswerState>(k: K, v: AnswerState[K]) => void;
+}) {
+  return (
+    <div className="grid gap-4">
+      <div className="rounded-eloLg border border-line bg-card p-5 sm:p-6">
+        <div className="grid gap-4">
+          <Checkbox
+            label={CONSENT_TEXTS.funnelContact}
+            checked={Boolean(state.contactConsent)}
+            onChange={(e) => setField('contactConsent', e.target.checked)}
+          />
+          <Checkbox
+            label={
+              <>
+                {CONSENT_TEXTS.funnelPrivacy}{' '}
+                <Link
+                  className="underline underline-offset-4"
+                  href="/datenschutz"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  (Datenschutz)
+                </Link>
+              </>
+            }
+            checked={Boolean(state.privacyAccepted)}
+            onChange={(e) => setField('privacyAccepted', e.target.checked)}
+          />
+        </div>
+      </div>
+      <p className="text-[12.5px] text-muted leading-relaxed">
+        Sie können Ihre Einwilligung jederzeit widerrufen – per E-Mail oder über unser{' '}
+        <Link
+          href="/datenschutz/anfrage"
+          className="underline underline-offset-4 hover:text-ink"
+        >
+          Auskunfts- &amp; Löschformular
+        </Link>
+        .
+      </p>
+    </div>
+  );
+}

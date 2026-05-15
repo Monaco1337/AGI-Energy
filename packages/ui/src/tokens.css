@@ -1,0 +1,155 @@
+/* AGI Energy – Premium Design Tokens (2030) + Legacy (--elo-*) Aliase */
+
+:root {
+  /* —— AGI Primär —— */
+  --agi-navy: #07111f;
+  --agi-graphite: #101820;
+  --agi-soft-white: #f7f9fc;
+  --agi-white: #ffffff;
+
+  /* —— AGI Premium Dark (Burgundy / Charcoal Hero) —— */
+  --agi-burgundy: #1e1014;
+  --agi-burgundy-deep: #160a0d;
+  --agi-charcoal: #131519;
+  --agi-charcoal-2: #1a1d23;
+  --agi-warm-amber: #d8a36a;
+  --agi-warm-amber-soft: rgba(216, 163, 106, 0.18);
+
+  /* —— AGI Akzent —— */
+  --agi-energy-green: #4fd1c5;
+  --agi-energy-green-deep: #2bafa2;
+  --agi-premium-blue: #3b82f6;
+  --agi-soft-gold: #d8b76a;
+  --agi-cyan: #4fd1c5;
+  --agi-cyan-deep: #2bafa2;
+
+  /* —— AGI Sekundär —— */
+  --agi-slate: #64748b;
+  --agi-border-light: #e2e8f0;
+  --agi-bg-soft: #f1f5f9;
+  --agi-success: #16a34a;
+  --agi-warning: #f59e0b;
+  --agi-error: #dc2626;
+
+  /* —— Gradients —— */
+  --agi-grad-cta: linear-gradient(135deg, #4fd1c5 0%, #2bafa2 100%);
+  --agi-grad-cta-hover: linear-gradient(135deg, #5fd9ce 0%, #2fbeb1 100%);
+  --agi-grad-dark:
+    radial-gradient(1100px 600px at 12% -10%, rgba(216, 163, 106, 0.16), transparent 55%),
+    radial-gradient(900px 500px at 105% 28%, rgba(79, 209, 197, 0.10), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, rgba(216, 163, 106, 0.06), transparent 60%),
+    linear-gradient(135deg, #1e1014 0%, #14171c 55%, #0e1014 100%);
+  --agi-grad-radial-orbs:
+    radial-gradient(700px 400px at 0% 0%, rgba(216, 163, 106, 0.14), transparent 55%),
+    radial-gradient(600px 400px at 100% 0%, rgba(79, 209, 197, 0.08), transparent 55%);
+
+  /* —— Schatten —— */
+  --agi-shadow-glass: 0 10px 40px rgba(7, 6, 10, 0.18), 0 2px 8px rgba(7, 6, 10, 0.08);
+  --agi-shadow-premium: 0 28px 60px rgba(7, 6, 10, 0.28), 0 10px 20px rgba(7, 6, 10, 0.16);
+  --agi-shadow-lift: 0 8px 24px rgba(79, 209, 197, 0.25), 0 2px 6px rgba(43, 175, 162, 0.12);
+
+  /* —— Radius —— */
+  --agi-radius: 16px;
+  --agi-radius-lg: 24px;
+  --agi-radius-xl: 32px;
+  --agi-radius-pill: 999px;
+
+  /* —— Typo (Umlaute über Webfont-Subset latin) —— */
+  --agi-font-sans:
+    var(--font-inter, 'InterVariable'), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Helvetica, Arial, sans-serif;
+  --agi-font-display:
+    var(--font-display, 'InterVariable'), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Helvetica, Arial, sans-serif;
+
+  /* —— Motion —— */
+  --agi-dur-fast: 160ms;
+  --agi-dur: 240ms;
+  --agi-dur-slow: 360ms;
+
+  /* —— Legacy: bestehende Komponenten (--elo-*) → AGI —— */
+  --elo-paper: var(--agi-soft-white);
+  --elo-paper-2: var(--agi-bg-soft);
+  --elo-card: var(--agi-white);
+  --elo-ink: var(--agi-navy);
+  --elo-ink-2: var(--agi-graphite);
+  --elo-muted: var(--agi-slate);
+  --elo-line: var(--agi-border-light);
+  --elo-line-strong: #cbd5e1;
+  --elo-sage: var(--agi-cyan);
+  --elo-sage-2: var(--agi-cyan-deep);
+  --elo-gold: var(--agi-soft-gold);
+  --elo-gold-2: #c4a55a;
+  --elo-brand: var(--agi-soft-gold);
+  --elo-brand-2: #c4a55a;
+  --elo-red: var(--agi-error);
+  --elo-orange: #ea580c;
+  --elo-yellow: var(--agi-warning);
+  --elo-blue: var(--agi-premium-blue);
+  --elo-gray: var(--agi-slate);
+  --elo-black: var(--agi-graphite);
+
+  --elo-font-sans: var(--agi-font-sans);
+  --elo-font-display: var(--agi-font-display);
+
+  --elo-radius: var(--agi-radius);
+  --elo-radius-lg: var(--agi-radius-lg);
+  --elo-radius-pill: var(--agi-radius-pill);
+
+  --elo-shadow-sm: 0 1px 2px rgba(7, 17, 31, 0.04), 0 1px 1px rgba(7, 17, 31, 0.03);
+  --elo-shadow: var(--agi-shadow-glass);
+  --elo-shadow-lg: var(--agi-shadow-premium);
+
+  --elo-dur-fast: var(--agi-dur-fast);
+  --elo-dur: var(--agi-dur);
+  --elo-dur-slow: var(--agi-dur-slow);
+}
+
+html[data-comfort='1'] {
+  font-size: 18px;
+}
+html[data-comfort='1'] body {
+  letter-spacing: 0.005em;
+}
+html[data-comfort='1'] {
+  --agi-dur-fast: 80ms;
+  --agi-dur: 120ms;
+  --agi-dur-slow: 180ms;
+  --elo-dur-fast: 80ms;
+  --elo-dur: 120ms;
+  --elo-dur-slow: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --agi-dur-fast: 0ms;
+    --agi-dur: 0ms;
+    --agi-dur-slow: 0ms;
+    --elo-dur-fast: 0ms;
+    --elo-dur: 0ms;
+    --elo-dur-slow: 0ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --elo-line: #94a3b8;
+    --elo-muted: #475569;
+    --agi-border-light: #94a3b8;
+    --agi-slate: #475569;
+  }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-card {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}

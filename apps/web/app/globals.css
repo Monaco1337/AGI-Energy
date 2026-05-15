@@ -1,0 +1,185 @@
+@import '../../../packages/ui/src/tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background: var(--agi-soft-white);
+  color: var(--agi-navy);
+  font-family: var(--agi-font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--agi-cyan);
+  color: var(--agi-burgundy-deep);
+}
+
+a {
+  color: inherit;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--agi-cyan);
+  outline-offset: 2px;
+}
+
+.elo-hp {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+/* Premium dark hero surface (Burgundy / Charcoal / warm light) */
+.bg-premium-dark {
+  background: var(--agi-grad-dark);
+  color: var(--agi-soft-white);
+}
+
+/* Glass card (hero form) – clear premium glass */
+.bg-card-glass {
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  backdrop-filter: blur(20px) saturate(120%);
+}
+
+/* Glass card – dark variant (on dark surfaces) */
+.bg-card-glass-dark {
+  background: rgba(255, 255, 255, 0.04);
+  -webkit-backdrop-filter: blur(20px) saturate(110%);
+  backdrop-filter: blur(20px) saturate(110%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-card-glass,
+  .bg-card-glass-dark {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .bg-card-glass {
+    background: rgba(255, 255, 255, 0.96);
+  }
+}
+
+/* CTA gradient text */
+.text-gradient-energy {
+  background: var(--agi-grad-cta);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Warm amber accent text (premium gold) */
+.text-warm-amber {
+  color: var(--agi-warm-amber);
+}
+
+/* Hairline soft divider (works on dark + light) */
+.hairline {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
+}
+.hairline-dark {
+  background: linear-gradient(90deg, transparent 0%, rgba(7, 6, 10, 0.12) 50%, transparent 100%);
+}
+
+/* Primary CTA button (when not using Button component) */
+.btn-gradient-cta {
+  background: var(--agi-grad-cta);
+  color: var(--agi-white);
+  box-shadow: var(--agi-shadow-lift);
+  transition:
+    transform var(--agi-dur) ease,
+    box-shadow var(--agi-dur) ease,
+    background var(--agi-dur) ease;
+}
+.btn-gradient-cta:hover {
+  transform: translateY(-1px);
+  background: var(--agi-grad-cta-hover);
+  box-shadow: 0 14px 32px rgba(79, 209, 197, 0.32), 0 4px 12px rgba(43, 175, 162, 0.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-gradient-cta:hover {
+    transform: none;
+  }
+}
+
+/* Faint grid for hero depth */
+.grid-faint {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(0, 0, 0, 0.9), transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(0, 0, 0, 0.9), transparent 75%);
+}
+
+/* Thin energy line (decorative, subtle) */
+.energy-line {
+  position: absolute;
+  background: linear-gradient(90deg, transparent, rgba(216, 163, 106, 0.35), rgba(79, 209, 197, 0.22), transparent);
+  height: 1px;
+}
+
+/* Soft fade-in for content blocks */
+@keyframes agiFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.agi-fade-up {
+  animation: agiFadeUp var(--agi-dur-slow) ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .agi-fade-up { animation: none; }
+}
+
+/* —— Hero: 0% Bildbearbeitung – Lesbarkeit via Premium-Text-Shadows —— */
+/* Cinematic Headline-Shadow (mehrlagig wie Apple-Editorial) */
+.text-hero-display {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.55),
+    0 8px 32px rgba(0, 0, 0, 0.7),
+    0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.text-hero-body {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.5),
+    0 2px 12px rgba(0, 0, 0, 0.75),
+    0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.text-hero-fine {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.7);
+}
+/* Trust-Line: extra kräftiger Multi-Layer-Shadow für kleine Schrift über Bild */
+.text-hero-trust {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.85),
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 3px 10px rgba(0, 0, 0, 0.8),
+    0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Minimaler Top-/Bottom-Fade nur als Übergang zu Header / Section,
+   das Bild selbst bleibt unangetastet. */
+.hero-fade-top { background: linear-gradient(to bottom, rgba(8, 6, 10, 0.65), rgba(8, 6, 10, 0) 100%); }
+.hero-fade-bottom { background: linear-gradient(to top, rgba(8, 6, 10, 0.78), rgba(8, 6, 10, 0) 100%); }
+
+/* Legacy hero (unused on new landing; harmless) */
+.hero-grain {
+  background-image:
+    radial-gradient(1200px 600px at 80% -10%, rgba(32, 201, 151, 0.12), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(59, 130, 246, 0.1), transparent 60%);
+}

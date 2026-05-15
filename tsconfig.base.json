@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "verbatimModuleSyntax": false,
+    "allowJs": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@elo/core": ["packages/core/src"],
+      "@elo/core/*": ["packages/core/src/*"],
+      "@elo/ui": ["packages/ui/src"],
+      "@elo/ui/*": ["packages/ui/src/*"],
+      "@elo/scoring": ["packages/scoring/src"],
+      "@elo/scoring/*": ["packages/scoring/src/*"],
+      "@elo/storage": ["packages/storage/src"],
+      "@elo/storage/*": ["packages/storage/src/*"],
+      "@elo/mail": ["packages/mail/src"],
+      "@elo/mail/*": ["packages/mail/src/*"],
+      "@elo/audit": ["packages/audit/src"],
+      "@elo/audit/*": ["packages/audit/src/*"],
+      "@elo/experiments": ["packages/experiments/src"],
+      "@elo/experiments/*": ["packages/experiments/src/*"]
+    }
+  }
+}

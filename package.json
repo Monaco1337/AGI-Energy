@@ -1,0 +1,32 @@
+{
+  "name": "energy-lead-os",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Energy Lead OS – Premium-Lead-Plattform für Strom, Gas und Photovoltaik",
+  "scripts": {
+    "dev": "pnpm --filter @elo/web dev",
+    "build": "pnpm --filter @elo/web build",
+    "start": "pnpm --filter @elo/web start",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:e2e": "pnpm --filter @elo/web test:e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "packageManager": "pnpm@10.22.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "argon2",
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

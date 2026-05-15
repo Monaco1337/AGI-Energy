@@ -1,0 +1,37 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "preserve",
+    "module": "esnext",
+    "baseUrl": ".",
+    "plugins": [{ "name": "next" }],
+    "types": ["node"],
+    "paths": {
+      "@elo/core": ["../../packages/core/src"],
+      "@elo/core/*": ["../../packages/core/src/*"],
+      "@elo/ui": ["../../packages/ui/src"],
+      "@elo/ui/*": ["../../packages/ui/src/*"],
+      "@elo/scoring": ["../../packages/scoring/src"],
+      "@elo/storage": ["../../packages/storage/src"],
+      "@elo/mail": ["../../packages/mail/src"],
+      "@elo/audit": ["../../packages/audit/src"],
+      "@elo/experiments": ["../../packages/experiments/src"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "playwright-report",
+    "test-results",
+    "tailwind.config.ts",
+    "postcss.config.js",
+    "scripts/screenshots.ts"
+  ]
+}
