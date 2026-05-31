@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@elo/core": "workspace:*"
+    "@elo/core": "workspace:*",
+    "@vercel/blob": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

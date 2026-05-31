@@ -4,8 +4,10 @@ import { Badge } from '@elo/ui';
 export const dynamic = 'force-dynamic';
 
 export default function SettingsPage() {
+  const storageDriver =
+    env.STORAGE_DRIVER ?? (process.env.BLOB_READ_WRITE_TOKEN ? 'blob' : 'json');
   const flags = [
-    { k: 'STORAGE_DRIVER', v: env.STORAGE_DRIVER },
+    { k: 'STORAGE_DRIVER', v: storageDriver },
     { k: 'MAIL_DRIVER', v: env.MAIL_DRIVER },
     { k: 'AI_ASSIST', v: env.AI_ASSIST },
     { k: 'EXPERIMENTS_ENABLED', v: env.EXPERIMENTS_ENABLED },

@@ -13,7 +13,9 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   NEXT_PUBLIC_SITE_URL: emptyToUndef.pipe(z.string().url().default('http://localhost:3000')),
 
-  STORAGE_DRIVER: z.enum(['json', 'supabase']).default('json'),
+  STORAGE_DRIVER: z.enum(['json', 'supabase', 'blob']).optional(),
+  STORAGE_BLOB_PATHNAME: optStr,
+  BLOB_READ_WRITE_TOKEN: optStr,
   SUPABASE_URL: optUrl,
   SUPABASE_ANON_KEY: optStr,
   SUPABASE_SERVICE_ROLE_KEY: optStr,

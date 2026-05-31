@@ -20,3 +20,5 @@ apps/web/data/contact-inquiries.json
 .pnpm-store
 playwright-report
 test-results
+.vercel
+.env*
