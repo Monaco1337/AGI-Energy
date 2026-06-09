@@ -199,6 +199,35 @@ export async function setPartnerLoginPolicyAction(formData: FormData): Promise<v
   if (parsed.redirectTo) redirect(parsed.redirectTo);
 }
 
+const unlockSchema = z.object({
+  id: z.string().min(1),
+  redirectTo: z.string().optional(),
+});
+
+/** Admin: temporäre Login-Sperre eines Partners aufheben (ohne Passwortänderung). */
+export async function unlockPartnerLoginAction(formData: FormData): Promise<void> {
+  const parsed = unlockSchema.parse({
+    id: formData.get('id'),
+    redirectTo: formData.get('redirectTo') || undefined,
+  });
+  const session = await requireSession();
+  if (!isAdminRole(session.role)) throw new Error('Nur Admin.');
+  const storage = getStorage();
+  const partner = await storage.getPartner(parsed.id as PartnerId);
+  if (!partner) throw new Error('Partner nicht gefunden.');
+  const user = await resolvePartnerUser(storage, partner);
+  if (!user) throw new Error('Kein Login-Konto für diesen Partner gefunden.');
+  await storage.updateUser(user.id, { failedLoginCount: 0, lockedUntil: undefined });
+  await logAudit({
+    ctx: { actorId: session.userId, actorRole: session.role },
+    action: 'settings.updated',
+    entity: 'user',
+    entityId: user.id,
+  });
+  revalidatePath('/admin', 'layout');
+  if (parsed.redirectTo) redirect(parsed.redirectTo);
+}
+
 const resetPwSchema = z.object({
   id: z.string().min(1),
   redirectTo: z.string().optional(),

@@ -10,6 +10,7 @@ import {
   deletePartnerAction,
   setPartnerLoginPolicyAction,
   resetPartnerPasswordAction,
+  unlockPartnerLoginAction,
 } from '@/app/actions/partnerMutations';
 import { ConfirmSubmit } from '@/components/agi/shared/ConfirmSubmit';
 
@@ -44,6 +45,11 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
     (partner.userId ? users.find((u) => u.id === partner.userId) : undefined) ??
     users.find((u) => u.partnerId === partner.id) ??
     null;
+
+  const lockedUntil =
+    loginUser?.lockedUntil && new Date(loginUser.lockedUntil).getTime() > Date.now()
+      ? new Date(loginUser.lockedUntil)
+      : null;
 
   const active = leads.filter(
     (l) => l.status !== 'Abgeschlossen' && l.status !== 'Verloren' && l.status !== 'Gesperrt',
@@ -167,19 +173,40 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
                   </div>
                   <span
                     className="ops-pill shrink-0"
-                    data-tone={loginUser.mustChangePassword ? 'gold' : 'success'}
+                    data-tone={lockedUntil ? 'critical' : loginUser.mustChangePassword ? 'gold' : 'success'}
                   >
-                    {loginUser.mustChangePassword ? 'Erst-Login offen' : 'Aktiv'}
+                    {lockedUntil ? 'Gesperrt' : loginUser.mustChangePassword ? 'Erst-Login offen' : 'Aktiv'}
                   </span>
                 </div>
 
-                <p className="text-[12px] text-[var(--ops-text-2)] leading-snug">
-                  {loginUser.mustChangePassword
-                    ? 'Beim ersten Login muss ein eigenes Passwort vergeben werden. Zum Reinschauen kannst du die Pflicht aufheben.'
-                    : 'Dieser Partner kann sich direkt mit seinem Passwort anmelden.'}
-                </p>
+                {lockedUntil ? (
+                  <p className="text-[12px] text-[var(--ops-critical)] leading-snug">
+                    Konto temporär gesperrt (zu viele Fehlversuche) – automatisch frei ab{' '}
+                    {lockedUntil.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr.
+                    Du kannst die Sperre sofort aufheben.
+                  </p>
+                ) : (
+                  <p className="text-[12px] text-[var(--ops-text-2)] leading-snug">
+                    {loginUser.mustChangePassword
+                      ? 'Beim ersten Login muss ein eigenes Passwort vergeben werden. Zum Reinschauen kannst du die Pflicht aufheben.'
+                      : 'Dieser Partner kann sich direkt mit seinem Passwort anmelden.'}
+                  </p>
+                )}
 
                 <div className="flex flex-wrap gap-2">
+                  {lockedUntil && (
+                    <form action={unlockPartnerLoginAction}>
+                      <input type="hidden" name="id" value={partner.id} />
+                      <input
+                        type="hidden"
+                        name="redirectTo"
+                        value={`/admin/vertriebspartner/${partner.id}`}
+                      />
+                      <button className="ops-cta h-9 px-3 rounded-lg text-[12.5px]">
+                        Sperre aufheben
+                      </button>
+                    </form>
+                  )}
                   <form action={setPartnerLoginPolicyAction}>
                     <input type="hidden" name="id" value={partner.id} />
                     <input
