@@ -1,32 +1,22 @@
 import { ImageResponse } from 'next/og';
+import { BrandIcon } from '@/lib/brandIcon';
 
-// AGI Energy – Brand-Mark als Favicon
-// Zwei sich überlappende, gold-getönte Kreise auf schwarzem rundem Hintergrund.
-export const size = { width: 64, height: 64 };
+// AGI Energy – markenkonformes Favicon in mehreren Auflösungen.
+// Browser wählen die passende Größe (16/32/48) für Tab, Lesezeichen & Verlauf.
 export const contentType = 'image/png';
 
-export default function Icon() {
+export function generateImageMetadata() {
+  return [
+    { id: '16', size: { width: 16, height: 16 }, contentType },
+    { id: '32', size: { width: 32, height: 32 }, contentType },
+    { id: '48', size: { width: 48, height: 48 }, contentType },
+  ];
+}
+
+export default function Icon({ id }: { id: string }) {
+  const px = Number(id);
   return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#0e0e0e',
-          borderRadius: '50%',
-        }}
-      >
-        <svg width="48" height="48" viewBox="0 0 64 64">
-          <circle cx="38" cy="32" r="18" fill="#e8b66a" />
-          <circle cx="26" cy="32" r="18" fill="#0e0e0e" />
-          <circle cx="28" cy="32" r="15.5" fill="#e8b66a" />
-          <circle cx="22" cy="32" r="15.5" fill="#0e0e0e" />
-        </svg>
-      </div>
-    ),
-    { ...size },
+    <BrandIcon size={px} radius={px <= 16 ? 0.16 : 0.22} pad={px <= 32 ? 0.03 : 0.05} />,
+    { width: px, height: px },
   );
 }

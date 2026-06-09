@@ -25,6 +25,11 @@ export const metadata: Metadata = {
   description:
     'Laden Sie Ihre Jahresabrechnung hoch und lassen Sie Strom-, Gas-, Solar- oder Gewerbetarife persönlich prüfen. Keine Tarifliste, sondern eine klare Empfehlung.',
   applicationName: 'AGI Energy',
+  appleWebApp: {
+    capable: true,
+    title: 'AGI Energy',
+    statusBarStyle: 'black-translucent',
+  },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
