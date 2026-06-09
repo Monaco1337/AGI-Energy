@@ -5,7 +5,12 @@ import { getStorage } from '@elo/storage';
 import { requireRole } from '@/lib/agi/permissions';
 import { PartnerForm } from '@/components/agi/partners/PartnerForm';
 import { LeadCard } from '@/components/agi/leads/LeadCard';
-import { setPartnerStatusAction, deletePartnerAction } from '@/app/actions/partnerMutations';
+import {
+  setPartnerStatusAction,
+  deletePartnerAction,
+  setPartnerLoginPolicyAction,
+  resetPartnerPasswordAction,
+} from '@/app/actions/partnerMutations';
 import { ConfirmSubmit } from '@/components/agi/shared/ConfirmSubmit';
 
 export const dynamic = 'force-dynamic';
@@ -28,11 +33,17 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
   const partner = await storage.getPartner(id as PartnerId);
   if (!partner) notFound();
 
-  const [leads, deals, commissions] = await Promise.all([
+  const [leads, deals, commissions, users] = await Promise.all([
     storage.listLeads({ assignedPartnerId: partner.id }),
     storage.listDeals({ partnerId: partner.id }),
     storage.listCommissions({ partnerId: partner.id }),
+    storage.listUsers(),
   ]);
+
+  const loginUser =
+    (partner.userId ? users.find((u) => u.id === partner.userId) : undefined) ??
+    users.find((u) => u.partnerId === partner.id) ??
+    null;
 
   const active = leads.filter(
     (l) => l.status !== 'Abgeschlossen' && l.status !== 'Verloren' && l.status !== 'Gesperrt',
@@ -140,9 +151,81 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
           )}
         </section>
 
-        <aside>
-          <h2 className="font-display text-[18px] text-[var(--ops-text)] mb-3">Stammdaten bearbeiten</h2>
-          <PartnerForm partner={partner} redirectTo={`/admin/vertriebspartner/${partner.id}`} />
+        <aside className="space-y-5">
+          <div>
+            <h2 className="font-display text-[18px] text-[var(--ops-text)] mb-3">Login-Konto</h2>
+            {loginUser ? (
+              <div className="ops-card p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[10.5px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">
+                      Benutzername
+                    </div>
+                    <div className="mt-0.5 text-[14px] text-[var(--ops-text)] font-medium truncate">
+                      @{loginUser.username}
+                    </div>
+                  </div>
+                  <span
+                    className="ops-pill shrink-0"
+                    data-tone={loginUser.mustChangePassword ? 'gold' : 'success'}
+                  >
+                    {loginUser.mustChangePassword ? 'Erst-Login offen' : 'Aktiv'}
+                  </span>
+                </div>
+
+                <p className="text-[12px] text-[var(--ops-text-2)] leading-snug">
+                  {loginUser.mustChangePassword
+                    ? 'Beim ersten Login muss ein eigenes Passwort vergeben werden. Zum Reinschauen kannst du die Pflicht aufheben.'
+                    : 'Dieser Partner kann sich direkt mit seinem Passwort anmelden.'}
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  <form action={setPartnerLoginPolicyAction}>
+                    <input type="hidden" name="id" value={partner.id} />
+                    <input
+                      type="hidden"
+                      name="mustChange"
+                      value={loginUser.mustChangePassword ? 'false' : 'true'}
+                    />
+                    <input
+                      type="hidden"
+                      name="redirectTo"
+                      value={`/admin/vertriebspartner/${partner.id}`}
+                    />
+                    <button className="ops-cta-ghost h-9 px-3 rounded-lg text-[12.5px]">
+                      {loginUser.mustChangePassword
+                        ? 'Erst-Login-Pflicht aufheben'
+                        : 'Erst-Login-Pflicht aktivieren'}
+                    </button>
+                  </form>
+
+                  <form action={resetPartnerPasswordAction}>
+                    <input type="hidden" name="id" value={partner.id} />
+                    <input
+                      type="hidden"
+                      name="redirectTo"
+                      value={`/admin/vertriebspartner/${partner.id}`}
+                    />
+                    <ConfirmSubmit
+                      message="Passwort dieses Partners auf das Start-Passwort zurücksetzen? Der Partner muss es beim nächsten Login neu setzen."
+                      className="h-9 px-3 rounded-lg border border-[var(--ops-border)] text-[var(--ops-text-2)] hover:text-[var(--ops-text)] hover:bg-white/[0.04] text-[12.5px]"
+                    >
+                      Passwort zurücksetzen
+                    </ConfirmSubmit>
+                  </form>
+                </div>
+              </div>
+            ) : (
+              <div className="ops-card p-4 text-[13px] text-[var(--ops-text-2)]">
+                Kein Login-Konto verknüpft.
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h2 className="font-display text-[18px] text-[var(--ops-text)] mb-3">Stammdaten bearbeiten</h2>
+            <PartnerForm partner={partner} redirectTo={`/admin/vertriebspartner/${partner.id}`} />
+          </div>
         </aside>
       </div>
     </div>

@@ -5,9 +5,12 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { newId, nowIso } from '@elo/core';
 import type { Partner, PartnerId, PartnerSpecialty, PartnerStatus } from '@elo/core';
+import type { AdminUser } from '@elo/core';
 import { getStorage } from '@elo/storage';
+import type { StorageAdapter } from '@elo/storage';
 import { logAudit, diffObjects } from '@elo/audit';
 import { requireSession, isAdminRole } from '@/lib/agi/permissions';
+import { hashPassword } from '@/lib/auth/password';
 
 const SPECIALTIES: readonly PartnerSpecialty[] = ['strom', 'gas', 'photovoltaik', 'strom_gas', 'gewerbe'];
 const STATUSES: readonly PartnerStatus[] = ['active', 'paused', 'full', 'inactive'];
@@ -148,6 +151,85 @@ export async function setPartnerStatusAction(formData: FormData): Promise<void> 
       diff: diffObjects(partner, updated, ['status']),
     });
   }
+  revalidatePath('/admin', 'layout');
+  if (parsed.redirectTo) redirect(parsed.redirectTo);
+}
+
+/** Ermittelt das Login-Konto (AdminUser) eines Partners. */
+async function resolvePartnerUser(
+  storage: StorageAdapter,
+  partner: Partner,
+): Promise<AdminUser | null> {
+  if (partner.userId) {
+    const u = await storage.getUser(partner.userId as never);
+    if (u) return u;
+  }
+  const users = await storage.listUsers();
+  return users.find((u) => u.partnerId === partner.id) ?? null;
+}
+
+const loginPolicySchema = z.object({
+  id: z.string().min(1),
+  mustChange: z.enum(['true', 'false']),
+  redirectTo: z.string().optional(),
+});
+
+/** Admin: erzwungene Erst-Login-Passwortänderung eines Partners an-/ausschalten. */
+export async function setPartnerLoginPolicyAction(formData: FormData): Promise<void> {
+  const parsed = loginPolicySchema.parse({
+    id: formData.get('id'),
+    mustChange: formData.get('mustChange'),
+    redirectTo: formData.get('redirectTo') || undefined,
+  });
+  const session = await requireSession();
+  if (!isAdminRole(session.role)) throw new Error('Nur Admin.');
+  const storage = getStorage();
+  const partner = await storage.getPartner(parsed.id as PartnerId);
+  if (!partner) throw new Error('Partner nicht gefunden.');
+  const user = await resolvePartnerUser(storage, partner);
+  if (!user) throw new Error('Kein Login-Konto für diesen Partner gefunden.');
+  await storage.updateUser(user.id, { mustChangePassword: parsed.mustChange === 'true' });
+  await logAudit({
+    ctx: { actorId: session.userId, actorRole: session.role },
+    action: 'settings.updated',
+    entity: 'user',
+    entityId: user.id,
+  });
+  revalidatePath('/admin', 'layout');
+  if (parsed.redirectTo) redirect(parsed.redirectTo);
+}
+
+const resetPwSchema = z.object({
+  id: z.string().min(1),
+  redirectTo: z.string().optional(),
+});
+
+/** Admin: Partner-Passwort auf das Start-Passwort zurücksetzen (erzwingt erneut Änderung). */
+export async function resetPartnerPasswordAction(formData: FormData): Promise<void> {
+  const parsed = resetPwSchema.parse({
+    id: formData.get('id'),
+    redirectTo: formData.get('redirectTo') || undefined,
+  });
+  const session = await requireSession();
+  if (!isAdminRole(session.role)) throw new Error('Nur Admin.');
+  const storage = getStorage();
+  const partner = await storage.getPartner(parsed.id as PartnerId);
+  if (!partner) throw new Error('Partner nicht gefunden.');
+  const user = await resolvePartnerUser(storage, partner);
+  if (!user) throw new Error('Kein Login-Konto für diesen Partner gefunden.');
+  const initial = process.env.PARTNER_INITIAL_PASSWORD ?? 'AGI-Start2026!';
+  await storage.updateUser(user.id, {
+    passwordHash: await hashPassword(initial),
+    mustChangePassword: true,
+    failedLoginCount: 0,
+    lockedUntil: undefined,
+  });
+  await logAudit({
+    ctx: { actorId: session.userId, actorRole: session.role },
+    action: 'settings.updated',
+    entity: 'user',
+    entityId: user.id,
+  });
   revalidatePath('/admin', 'layout');
   if (parsed.redirectTo) redirect(parsed.redirectTo);
 }
