@@ -13,10 +13,11 @@
   "dependencies": {
     "@elo/core": "workspace:*",
     "@vercel/blob": "^2.4.0",
-    "@vercel/postgres": "^0.10.0"
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
+    "@types/pg": "^8.11.10",
     "typescript": "^5.6.3"
   }
 }

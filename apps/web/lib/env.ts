@@ -46,6 +46,9 @@ const schema = z.object({
   ADMIN_BOOTSTRAP_EMAIL: optStr,
   ADMIN_BOOTSTRAP_PASSWORD: optStr,
 
+  /** Schützt den einmaligen Bootstrap-Endpoint /api/admin/bootstrap. */
+  SEED_SECRET: optStr,
+
   /** Optional: Zapier / Make / HubSpot / n8n Webhook – FAQ-Kontaktanfragen */
   CRM_CONTACT_WEBHOOK_URL: optUrl,
   CRM_CONTACT_WEBHOOK_SECRET: optStr,

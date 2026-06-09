@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
 import type {
   Lead,
   LeadId,
@@ -27,18 +27,21 @@ import type {
 } from './types';
 
 /**
- * Postgres-Adapter (Vercel Postgres / Neon, Treiber `@vercel/postgres`).
+ * Postgres-Adapter auf Basis von `pg` (node-postgres).
+ *
+ * Bewusst der universelle Standard-Treiber statt eines anbieter-spezifischen
+ * (z. B. Neon-Serverless): so funktioniert derselbe Code mit Vercel Postgres,
+ * Neon, Supabase und Prisma Postgres – solange eine Standard-`postgres://`-
+ * Verbindung über `POSTGRES_URL` bereitgestellt wird.
  *
  * Datenmodell: pro Entität eine Tabelle mit `id text PRIMARY KEY`, dem
  * vollständigen Objekt als `data jsonb` und `seq bigserial` für die
- * Einfügereihenfolge. Sämtliche Filter-/Suchlogik spiegelt exakt den
- * `BaseJsonAdapter` wider – sie wird in JS auf den geladenen Zeilen
- * angewandt. Bei den geringen Datenmengen eines Vertriebs-Leitstands ist
- * das robust und vermeidet Divergenzen zwischen JSON- und SQL-Logik.
+ * Einfügereihenfolge. Filter-/Such-/Duplikatlogik spiegelt exakt den
+ * `BaseJsonAdapter` (in JS auf den geladenen Zeilen) – robust bei den
+ * geringen Datenmengen eines Vertriebs-Leitstands.
  *
- * Hinweis: Tabellennamen stammen ausschließlich aus einer internen
- * Konstanten-Liste und werden nie aus Nutzereingaben gebildet – die
- * String-Interpolation in den Queries ist daher unkritisch.
+ * Tabellennamen stammen ausschließlich aus einer internen Konstanten-Liste
+ * und werden nie aus Nutzereingaben gebildet.
  */
 
 type Table =
@@ -64,53 +67,73 @@ const ALL_TABLES: Table[] = [
   'commissions',
 ];
 
+let _pool: Pool | null = null;
+
+function pool(): Pool {
+  if (_pool) return _pool;
+  const connectionString = process.env.POSTGRES_URL;
+  if (!connectionString) {
+    throw new Error('POSTGRES_URL fehlt für den Postgres-Treiber.');
+  }
+  const isLocal = /(localhost|127\.0\.0\.1)/.test(connectionString);
+  _pool = new Pool({
+    connectionString,
+    max: 3,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 15_000,
+    // Managed-Datenbanken erfordern TLS; lokale Instanzen i. d. R. nicht.
+    ...(isLocal ? {} : { ssl: { rejectUnauthorized: false } }),
+  });
+  return _pool;
+}
+
+async function query<T = unknown>(text: string, params: unknown[] = []): Promise<{ rows: T[]; rowCount: number }> {
+  const res = await pool().query(text, params);
+  return { rows: res.rows as T[], rowCount: res.rowCount ?? 0 };
+}
+
 /**
- * Legt das Schema idempotent an (CREATE … IF NOT EXISTS). Sollte einmalig
- * vor dem ersten Zugriff (z. B. im Seed) ausgeführt werden.
+ * Legt das Schema idempotent an (CREATE … IF NOT EXISTS). Wird einmalig vor
+ * dem ersten Zugriff ausgeführt (z. B. beim Seeding/Bootstrap).
  */
 export async function ensurePostgresSchema(): Promise<void> {
   for (const t of ALL_TABLES) {
-    await sql.query(
+    await query(
       `CREATE TABLE IF NOT EXISTS ${t} (id text PRIMARY KEY, data jsonb NOT NULL, seq bigserial)`,
     );
   }
-  await sql.query(
+  await query(
     `CREATE UNIQUE INDEX IF NOT EXISTS users_username_uidx ON users ((lower(data->>'username')))`,
   );
-  await sql.query(`CREATE INDEX IF NOT EXISTS users_email_idx ON users ((lower(data->>'email')))`);
-  await sql.query(`CREATE INDEX IF NOT EXISTS users_partner_idx ON users ((data->>'partnerId'))`);
-  await sql.query(`CREATE INDEX IF NOT EXISTS leads_partner_idx ON leads ((data->>'assignedPartnerId'))`);
-  await sql.query(`CREATE INDEX IF NOT EXISTS leads_status_idx ON leads ((data->>'status'))`);
-  await sql.query(`CREATE INDEX IF NOT EXISTS tasks_partner_idx ON tasks ((data->>'partnerId'))`);
-  await sql.query(`CREATE INDEX IF NOT EXISTS tasks_lead_idx ON tasks ((data->>'leadId'))`);
-  await sql.query(`CREATE INDEX IF NOT EXISTS deals_partner_idx ON deals ((data->>'partnerId'))`);
-  await sql.query(`CREATE INDEX IF NOT EXISTS deals_lead_idx ON deals ((data->>'leadId'))`);
-  await sql.query(
-    `CREATE INDEX IF NOT EXISTS commissions_partner_idx ON commissions ((data->>'partnerId'))`,
-  );
+  await query(`CREATE INDEX IF NOT EXISTS users_email_idx ON users ((lower(data->>'email')))`);
+  await query(`CREATE INDEX IF NOT EXISTS users_partner_idx ON users ((data->>'partnerId'))`);
+  await query(`CREATE INDEX IF NOT EXISTS leads_partner_idx ON leads ((data->>'assignedPartnerId'))`);
+  await query(`CREATE INDEX IF NOT EXISTS leads_status_idx ON leads ((data->>'status'))`);
+  await query(`CREATE INDEX IF NOT EXISTS tasks_partner_idx ON tasks ((data->>'partnerId'))`);
+  await query(`CREATE INDEX IF NOT EXISTS tasks_lead_idx ON tasks ((data->>'leadId'))`);
+  await query(`CREATE INDEX IF NOT EXISTS deals_partner_idx ON deals ((data->>'partnerId'))`);
+  await query(`CREATE INDEX IF NOT EXISTS deals_lead_idx ON deals ((data->>'leadId'))`);
+  await query(`CREATE INDEX IF NOT EXISTS commissions_partner_idx ON commissions ((data->>'partnerId'))`);
 }
 
 export class PostgresStorageAdapter implements StorageAdapter {
   private async all<T>(table: Table, order: 'ASC' | 'DESC' = 'DESC'): Promise<T[]> {
-    const { rows } = await sql.query(`SELECT data FROM ${table} ORDER BY seq ${order}`);
-    return rows.map((r) => r.data as T);
+    const { rows } = await query<{ data: T }>(`SELECT data FROM ${table} ORDER BY seq ${order}`);
+    return rows.map((r) => r.data);
   }
 
   private async one<T>(table: Table, id: string): Promise<T | null> {
-    const { rows } = await sql.query(`SELECT data FROM ${table} WHERE id = $1`, [id]);
-    return (rows[0]?.data as T) ?? null;
+    const { rows } = await query<{ data: T }>(`SELECT data FROM ${table} WHERE id = $1`, [id]);
+    return rows[0]?.data ?? null;
   }
 
   private async insert<T extends { id: string }>(table: Table, obj: T): Promise<T> {
-    await sql.query(`INSERT INTO ${table} (id, data) VALUES ($1, $2::jsonb)`, [
-      obj.id,
-      JSON.stringify(obj),
-    ]);
+    await query(`INSERT INTO ${table} (id, data) VALUES ($1, $2::jsonb)`, [obj.id, JSON.stringify(obj)]);
     return obj;
   }
 
-  private async upsert<T extends { id: string }>(table: Table, obj: T): Promise<T> {
-    await sql.query(
+  private async upsertRow<T extends { id: string }>(table: Table, obj: T): Promise<T> {
+    await query(
       `INSERT INTO ${table} (id, data) VALUES ($1, $2::jsonb)
        ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
       [obj.id, JSON.stringify(obj)],
@@ -131,16 +154,13 @@ export class PostgresStorageAdapter implements StorageAdapter {
       ...patch,
       ...(touchUpdatedAt ? { updatedAt: new Date().toISOString() } : {}),
     } as T;
-    await sql.query(`UPDATE ${table} SET data = $2::jsonb WHERE id = $1`, [
-      id,
-      JSON.stringify(updated),
-    ]);
+    await query(`UPDATE ${table} SET data = $2::jsonb WHERE id = $1`, [id, JSON.stringify(updated)]);
     return updated;
   }
 
   private async remove(table: Table, id: string): Promise<boolean> {
-    const { rowCount } = await sql.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
-    return (rowCount ?? 0) > 0;
+    const { rowCount } = await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+    return rowCount > 0;
   }
 
   // ─── Leads ──────────────────────────────────────────────────────────────
@@ -249,8 +269,7 @@ export class PostgresStorageAdapter implements StorageAdapter {
 
   async appendAudit(entry: AuditEntry): Promise<void> {
     await this.insert('audit', entry);
-    // Append-only, aber Retention auf die letzten 5000 Einträge begrenzen.
-    await sql.query(
+    await query(
       `DELETE FROM audit WHERE seq <= (
          SELECT seq FROM audit ORDER BY seq DESC OFFSET 5000 LIMIT 1
        )`,
@@ -258,31 +277,31 @@ export class PostgresStorageAdapter implements StorageAdapter {
   }
 
   async listAudit(limit = 200): Promise<AuditEntry[]> {
-    const { rows } = await sql.query(
+    const { rows } = await query<{ data: AuditEntry }>(
       `SELECT data FROM audit ORDER BY seq DESC LIMIT $1`,
       [limit],
     );
-    return rows.map((r) => r.data as AuditEntry);
+    return rows.map((r) => r.data);
   }
 
   // ─── Users ──────────────────────────────────────────────────────────────
 
   async getUserByEmail(email: string): Promise<AdminUser | null> {
     const e = email.toLowerCase().trim();
-    const { rows } = await sql.query(
+    const { rows } = await query<{ data: AdminUser }>(
       `SELECT data FROM users WHERE lower(data->>'email') = $1 LIMIT 1`,
       [e],
     );
-    return (rows[0]?.data as AdminUser) ?? null;
+    return rows[0]?.data ?? null;
   }
 
   async getUserByUsername(username: string): Promise<AdminUser | null> {
     const u = username.toLowerCase().trim();
-    const { rows } = await sql.query(
+    const { rows } = await query<{ data: AdminUser }>(
       `SELECT data FROM users WHERE lower(data->>'username') = $1 LIMIT 1`,
       [u],
     );
-    return (rows[0]?.data as AdminUser) ?? null;
+    return rows[0]?.data ?? null;
   }
 
   async getUser(id: UserId): Promise<AdminUser | null> {
@@ -294,7 +313,7 @@ export class PostgresStorageAdapter implements StorageAdapter {
   }
 
   async upsertUser(user: AdminUser): Promise<AdminUser> {
-    return this.upsert('users', user);
+    return this.upsertRow('users', user);
   }
 
   async updateUser(id: UserId, patch: Partial<AdminUser>): Promise<AdminUser | null> {
@@ -305,7 +324,7 @@ export class PostgresStorageAdapter implements StorageAdapter {
 
   async appendEvent(event: FunnelEvent): Promise<void> {
     await this.insert('events', event);
-    await sql.query(
+    await query(
       `DELETE FROM events WHERE seq <= (
          SELECT seq FROM events ORDER BY seq DESC OFFSET 50000 LIMIT 1
        )`,
@@ -313,11 +332,11 @@ export class PostgresStorageAdapter implements StorageAdapter {
   }
 
   async listEvents(limit = 5000): Promise<FunnelEvent[]> {
-    const { rows } = await sql.query(
+    const { rows } = await query<{ data: FunnelEvent }>(
       `SELECT data FROM events ORDER BY seq DESC LIMIT $1`,
       [limit],
     );
-    return rows.map((r) => r.data as FunnelEvent);
+    return rows.map((r) => r.data);
   }
 
   // ─── Partner ────────────────────────────────────────────────────────────
