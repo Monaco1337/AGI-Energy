@@ -30,6 +30,7 @@ export function createSupabaseAdapter(_config: { url: string; serviceKey: string
     appendAudit: m('appendAudit'),
     listAudit: m('listAudit'),
     getUserByEmail: m('getUserByEmail'),
+    getUserByUsername: m('getUserByUsername'),
     getUser: m('getUser'),
     listUsers: m('listUsers'),
     upsertUser: m('upsertUser'),

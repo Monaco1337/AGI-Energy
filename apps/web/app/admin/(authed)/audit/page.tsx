@@ -1,9 +1,11 @@
 import { getStorage } from '@elo/storage';
 import { Badge } from '@elo/ui';
+import { requireRole } from '@/lib/agi/permissions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AuditPage() {
+  await requireRole('admin');
   const storage = getStorage();
   const entries = await storage.listAudit(200);
   return (

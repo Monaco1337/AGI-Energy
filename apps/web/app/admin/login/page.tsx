@@ -25,7 +25,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
         <p className="mt-2 text-[14px] text-slate">Nur für autorisierte Mitarbeiter.</p>
         <form action={loginAction} className="mt-6 grid gap-4">
           <input type="hidden" name="next" value={sp.next ?? '/admin'} />
-          <Field label="E-Mail" name="email" type="email" autoComplete="username" required />
+          <Field label="Benutzername" name="username" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
           <Field label="Passwort" name="password" type="password" autoComplete="current-password" required />
           {sp.error && (
             <div className="rounded-elo border border-error/30 bg-error/5 px-3 py-2 text-error text-[14px]">
@@ -36,8 +36,8 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
             Anmelden
           </Button>
           <p className="text-[12px] text-slate leading-snug">
-            Erstanmeldung: setzen Sie ADMIN_BOOTSTRAP_EMAIL und ADMIN_BOOTSTRAP_PASSWORD in .env und führen Sie{' '}
-            <code className="text-navy bg-bgSoft px-1 rounded">pnpm seed</code> aus.
+            Anmeldung mit persönlichem Benutzernamen. Beim ersten Login werden Vertriebspartner
+            aufgefordert, ein eigenes Passwort zu vergeben.
           </p>
         </form>
         <p className="mt-6 text-center">

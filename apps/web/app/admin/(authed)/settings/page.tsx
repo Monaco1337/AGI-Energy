@@ -1,11 +1,14 @@
 import { env } from '@/lib/env';
 import { Badge } from '@elo/ui';
+import { requireRole } from '@/lib/agi/permissions';
 
 export const dynamic = 'force-dynamic';
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  await requireRole('admin');
   const storageDriver =
-    env.STORAGE_DRIVER ?? (process.env.BLOB_READ_WRITE_TOKEN ? 'blob' : 'json');
+    env.STORAGE_DRIVER ??
+    (process.env.POSTGRES_URL ? 'postgres' : process.env.BLOB_READ_WRITE_TOKEN ? 'blob' : 'json');
   const flags = [
     { k: 'STORAGE_DRIVER', v: storageDriver },
     { k: 'MAIL_DRIVER', v: env.MAIL_DRIVER },

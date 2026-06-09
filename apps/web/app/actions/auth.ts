@@ -22,14 +22,14 @@ export async function loginAction(formData: FormData): Promise<void> {
     redirect(`/admin/login?next=${encodeURIComponent(next)}&error=${encodeURIComponent('Zu viele Versuche. Bitte später erneut.')}`);
   }
 
-  const email = String(formData.get('email') ?? '').trim().toLowerCase();
+  const username = String(formData.get('username') ?? '').trim().toLowerCase();
   const password = String(formData.get('password') ?? '');
-  if (!email || !password) {
-    redirect(`/admin/login?error=${encodeURIComponent('Bitte E-Mail und Passwort angeben.')}`);
+  if (!username || !password) {
+    redirect(`/admin/login?error=${encodeURIComponent('Bitte Benutzername und Passwort angeben.')}`);
   }
 
   const storage = getStorage();
-  const user = await storage.getUserByEmail(email);
+  const user = await storage.getUserByUsername(username);
   const ipHash = hashIp(ip, env.NEXTAUTH_SECRET);
 
   if (!user) {
@@ -37,9 +37,9 @@ export async function loginAction(formData: FormData): Promise<void> {
       ctx: { actorId: 'anonymous', actorRole: 'anonymous', ipHash },
       action: 'auth.login_failed',
       entity: 'auth',
-      entityId: email,
+      entityId: username,
     });
-    redirect(`/admin/login?error=${encodeURIComponent('E-Mail oder Passwort ist falsch.')}`);
+    redirect(`/admin/login?error=${encodeURIComponent('Benutzername oder Passwort ist falsch.')}`);
   }
   if (user.lockedUntil && new Date(user.lockedUntil).getTime() > Date.now()) {
     redirect(`/admin/login?error=${encodeURIComponent('Konto temporär gesperrt. Bitte später erneut.')}`);
@@ -60,9 +60,9 @@ export async function loginAction(formData: FormData): Promise<void> {
       ctx: { actorId: user.id, actorRole: user.role, ipHash },
       action: 'auth.login_failed',
       entity: 'auth',
-      entityId: email,
+      entityId: username,
     });
-    redirect(`/admin/login?error=${encodeURIComponent('E-Mail oder Passwort ist falsch.')}`);
+    redirect(`/admin/login?error=${encodeURIComponent('Benutzername oder Passwort ist falsch.')}`);
   }
 
   await storage.updateUser(user.id, {
@@ -70,13 +70,24 @@ export async function loginAction(formData: FormData): Promise<void> {
     lockedUntil: undefined,
     lastLoginAt: nowIso(),
   });
-  await setSession({ userId: user.id, email: user.email, role: user.role });
+  await setSession({
+    userId: user.id,
+    username: user.username,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    mustChangePassword: user.mustChangePassword ?? false,
+  });
   await logAudit({
     ctx: { actorId: user.id, actorRole: user.role, ipHash },
     action: 'auth.login_success',
     entity: 'auth',
     entityId: user.id,
   });
+  // Erstlogin bzw. erzwungene Änderung: zuerst Passwort setzen lassen.
+  if (user.mustChangePassword) {
+    redirect('/admin/konto/passwort');
+  }
   redirect(next);
 }
 

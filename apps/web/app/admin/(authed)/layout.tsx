@@ -50,7 +50,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await getSession();
   if (!session) redirect('/admin/login');
 
-  const initials = (session.email[0] ?? 'A').toUpperCase();
+  // Erzwungene Passwortänderung (z. B. Partner-Erstlogin): Die Passwortseite
+  // liegt bewusst außerhalb dieser (authed)-Gruppe, daher kein Redirect-Loop.
+  if (session.mustChangePassword) redirect('/admin/konto/passwort');
+
+  const displayName = session.name ?? session.username;
+  const initials = (displayName[0] ?? 'A').toUpperCase();
   const counts = await loadCounts(session.role, session.userId);
 
   return (
@@ -71,7 +76,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               {initials}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-[12.5px] text-[var(--ops-text)] font-medium truncate">{session.email}</div>
+              <div className="text-[12.5px] text-[var(--ops-text)] font-medium truncate">{displayName}</div>
+              <div className="text-[11px] text-[var(--ops-text-2)] truncate">@{session.username}</div>
               <div className="mt-0.5">
                 <Badge tone="sage" className="!h-5 !px-2 !text-[10px]">
                   {session.role}
@@ -79,7 +85,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </div>
             </div>
           </div>
-          <form action={logoutAction} className="mt-2.5">
+          <Link
+            href="/admin/konto/passwort"
+            className="mt-2.5 block rounded-[10px] px-2.5 py-2 text-[13px] text-[var(--ops-text-2)] hover:text-[var(--ops-text)] hover:bg-white/[0.04] transition-colors"
+          >
+            Passwort ändern
+          </Link>
+          <form action={logoutAction} className="mt-1">
             <button className="w-full text-left rounded-[10px] px-2.5 py-2 text-[13px] text-[var(--ops-text-2)] hover:text-[var(--ops-text)] hover:bg-white/[0.04] transition-colors">
               Abmelden
             </button>
@@ -88,7 +100,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       {/* Mobile Topbar mit Drawer */}
-      <AdminMobileTopbar role={session.role} email={session.email} counts={counts} />
+      <AdminMobileTopbar role={session.role} email={displayName} counts={counts} />
 
       <main className="lg:pl-64 relative z-10">
         <div className="px-4 sm:px-5 lg:px-10 py-6 lg:py-10">{children}</div>

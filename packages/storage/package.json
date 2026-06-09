@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@elo/core": "workspace:*",
-    "@vercel/blob": "^2.4.0"
+    "@vercel/blob": "^2.4.0",
+    "@vercel/postgres": "^0.10.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

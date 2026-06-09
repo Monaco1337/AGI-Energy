@@ -107,7 +107,7 @@ export async function addLeadNoteAction(formData: FormData): Promise<void> {
   const note: Note = {
     id: newId('note'),
     createdAt: nowIso(),
-    author: session.email,
+    author: session.name ?? session.username,
     text: parsed.text.trim(),
   };
 
@@ -155,7 +155,7 @@ export async function logLeadContactAction(formData: FormData): Promise<void> {
     direction: 'outbound',
     result: parsed.result,
     text: parsed.text?.trim() ?? '',
-    createdBy: session.email,
+    createdBy: session.name ?? session.username,
   };
 
   const patch: Partial<Lead> = {

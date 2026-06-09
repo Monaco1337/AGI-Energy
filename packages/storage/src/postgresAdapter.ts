@@ -1,3 +1,4 @@
+import { sql } from '@vercel/postgres';
 import type {
   Lead,
   LeadId,
@@ -25,121 +26,143 @@ import type {
   CommissionFilter,
 } from './types';
 
-export interface DbShape {
-  leads: Lead[];
-  research: ResearchProspect[];
-  audit: AuditEntry[];
-  users: AdminUser[];
-  events: FunnelEvent[];
-  partners: Partner[];
-  tasks: Task[];
-  deals: Deal[];
-  commissions: Commission[];
-}
+/**
+ * Postgres-Adapter (Vercel Postgres / Neon, Treiber `@vercel/postgres`).
+ *
+ * Datenmodell: pro Entität eine Tabelle mit `id text PRIMARY KEY`, dem
+ * vollständigen Objekt als `data jsonb` und `seq bigserial` für die
+ * Einfügereihenfolge. Sämtliche Filter-/Suchlogik spiegelt exakt den
+ * `BaseJsonAdapter` wider – sie wird in JS auf den geladenen Zeilen
+ * angewandt. Bei den geringen Datenmengen eines Vertriebs-Leitstands ist
+ * das robust und vermeidet Divergenzen zwischen JSON- und SQL-Logik.
+ *
+ * Hinweis: Tabellennamen stammen ausschließlich aus einer internen
+ * Konstanten-Liste und werden nie aus Nutzereingaben gebildet – die
+ * String-Interpolation in den Queries ist daher unkritisch.
+ */
 
-export function emptyDb(): DbShape {
-  return {
-    leads: [],
-    research: [],
-    audit: [],
-    users: [],
-    events: [],
-    partners: [],
-    tasks: [],
-    deals: [],
-    commissions: [],
-  };
-}
+type Table =
+  | 'users'
+  | 'leads'
+  | 'research'
+  | 'audit'
+  | 'events'
+  | 'partners'
+  | 'tasks'
+  | 'deals'
+  | 'commissions';
+
+const ALL_TABLES: Table[] = [
+  'users',
+  'leads',
+  'research',
+  'audit',
+  'events',
+  'partners',
+  'tasks',
+  'deals',
+  'commissions',
+];
 
 /**
- * Gemeinsame JSON-Datenbanklogik für alle Speicher-Backends.
- *
- * Die konkrete Persistenz (Dateisystem, Vercel Blob, …) wird durch
- * `loadRaw`/`saveRaw` injiziert. Sämtliche Geschäftslogik (Filter,
- * Mutationen, Limits) lebt hier und bleibt damit Backend-unabhängig.
+ * Legt das Schema idempotent an (CREATE … IF NOT EXISTS). Sollte einmalig
+ * vor dem ersten Zugriff (z. B. im Seed) ausgeführt werden.
  */
-export abstract class BaseJsonAdapter implements StorageAdapter {
-  // Prozessweite Schreib-Serialisierung gegen Race-Conditions.
-  private writeQueue: Promise<void> = Promise.resolve();
+export async function ensurePostgresSchema(): Promise<void> {
+  for (const t of ALL_TABLES) {
+    await sql.query(
+      `CREATE TABLE IF NOT EXISTS ${t} (id text PRIMARY KEY, data jsonb NOT NULL, seq bigserial)`,
+    );
+  }
+  await sql.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS users_username_uidx ON users ((lower(data->>'username')))`,
+  );
+  await sql.query(`CREATE INDEX IF NOT EXISTS users_email_idx ON users ((lower(data->>'email')))`);
+  await sql.query(`CREATE INDEX IF NOT EXISTS users_partner_idx ON users ((data->>'partnerId'))`);
+  await sql.query(`CREATE INDEX IF NOT EXISTS leads_partner_idx ON leads ((data->>'assignedPartnerId'))`);
+  await sql.query(`CREATE INDEX IF NOT EXISTS leads_status_idx ON leads ((data->>'status'))`);
+  await sql.query(`CREATE INDEX IF NOT EXISTS tasks_partner_idx ON tasks ((data->>'partnerId'))`);
+  await sql.query(`CREATE INDEX IF NOT EXISTS tasks_lead_idx ON tasks ((data->>'leadId'))`);
+  await sql.query(`CREATE INDEX IF NOT EXISTS deals_partner_idx ON deals ((data->>'partnerId'))`);
+  await sql.query(`CREATE INDEX IF NOT EXISTS deals_lead_idx ON deals ((data->>'leadId'))`);
+  await sql.query(
+    `CREATE INDEX IF NOT EXISTS commissions_partner_idx ON commissions ((data->>'partnerId'))`,
+  );
+}
 
-  /** Rohinhalt der DB laden. `null`, wenn noch nichts gespeichert wurde. */
-  protected abstract loadRaw(): Promise<string | null>;
-
-  /** Rohinhalt der DB persistieren. */
-  protected abstract saveRaw(data: string): Promise<void>;
-
-  protected async readDb(): Promise<DbShape> {
-    const raw = await this.loadRaw();
-    if (!raw) return emptyDb();
-    try {
-      const parsed = JSON.parse(raw) as Partial<DbShape>;
-      return {
-        leads: parsed.leads ?? [],
-        research: parsed.research ?? [],
-        audit: parsed.audit ?? [],
-        users: parsed.users ?? [],
-        events: parsed.events ?? [],
-        partners: parsed.partners ?? [],
-        tasks: parsed.tasks ?? [],
-        deals: parsed.deals ?? [],
-        commissions: parsed.commissions ?? [],
-      };
-    } catch {
-      return emptyDb();
-    }
+export class PostgresStorageAdapter implements StorageAdapter {
+  private async all<T>(table: Table, order: 'ASC' | 'DESC' = 'DESC'): Promise<T[]> {
+    const { rows } = await sql.query(`SELECT data FROM ${table} ORDER BY seq ${order}`);
+    return rows.map((r) => r.data as T);
   }
 
-  protected async writeDb(db: DbShape): Promise<void> {
-    await this.saveRaw(JSON.stringify(db, null, 2));
+  private async one<T>(table: Table, id: string): Promise<T | null> {
+    const { rows } = await sql.query(`SELECT data FROM ${table} WHERE id = $1`, [id]);
+    return (rows[0]?.data as T) ?? null;
   }
 
-  private async mutate<T>(fn: (db: DbShape) => Promise<T> | T): Promise<T> {
-    let result!: T;
-    this.writeQueue = this.writeQueue.then(async () => {
-      const db = await this.readDb();
-      result = await fn(db);
-      await this.writeDb(db);
-    });
-    await this.writeQueue;
-    return result;
+  private async insert<T extends { id: string }>(table: Table, obj: T): Promise<T> {
+    await sql.query(`INSERT INTO ${table} (id, data) VALUES ($1, $2::jsonb)`, [
+      obj.id,
+      JSON.stringify(obj),
+    ]);
+    return obj;
+  }
+
+  private async upsert<T extends { id: string }>(table: Table, obj: T): Promise<T> {
+    await sql.query(
+      `INSERT INTO ${table} (id, data) VALUES ($1, $2::jsonb)
+       ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+      [obj.id, JSON.stringify(obj)],
+    );
+    return obj;
+  }
+
+  private async patch<T extends { id: string }>(
+    table: Table,
+    id: string,
+    patch: Partial<T>,
+    touchUpdatedAt = true,
+  ): Promise<T | null> {
+    const cur = await this.one<T>(table, id);
+    if (!cur) return null;
+    const updated = {
+      ...cur,
+      ...patch,
+      ...(touchUpdatedAt ? { updatedAt: new Date().toISOString() } : {}),
+    } as T;
+    await sql.query(`UPDATE ${table} SET data = $2::jsonb WHERE id = $1`, [
+      id,
+      JSON.stringify(updated),
+    ]);
+    return updated;
+  }
+
+  private async remove(table: Table, id: string): Promise<boolean> {
+    const { rowCount } = await sql.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+    return (rowCount ?? 0) > 0;
   }
 
   // ─── Leads ──────────────────────────────────────────────────────────────
 
   async createLead(lead: Lead): Promise<Lead> {
-    return this.mutate((db) => {
-      db.leads.unshift(lead);
-      return lead;
-    });
+    return this.insert('leads', lead);
   }
 
   async updateLead(id: LeadId, patch: Partial<Lead>): Promise<Lead | null> {
-    return this.mutate((db) => {
-      const idx = db.leads.findIndex((l) => l.id === id);
-      if (idx === -1) return null;
-      const existing = db.leads[idx]!;
-      const updated: Lead = { ...existing, ...patch, updatedAt: new Date().toISOString() } as Lead;
-      db.leads[idx] = updated;
-      return updated;
-    });
+    return this.patch<Lead>('leads', id, patch);
   }
 
   async getLead(id: LeadId): Promise<Lead | null> {
-    const db = await this.readDb();
-    return db.leads.find((l) => l.id === id) ?? null;
+    return this.one<Lead>('leads', id);
   }
 
   async deleteLead(id: LeadId): Promise<boolean> {
-    return this.mutate((db) => {
-      const before = db.leads.length;
-      db.leads = db.leads.filter((l) => l.id !== id);
-      return db.leads.length !== before;
-    });
+    return this.remove('leads', id);
   }
 
   async listLeads(filter: LeadFilter = {}): Promise<Lead[]> {
-    const db = await this.readDb();
-    let result = db.leads;
+    let result = await this.all<Lead>('leads');
     if (filter.colors?.length) result = result.filter((l) => filter.colors!.includes(l.leadColor));
     if (filter.statuses?.length) result = result.filter((l) => filter.statuses!.includes(l.status));
     if (filter.customerTypes?.length)
@@ -156,7 +179,9 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
     if (filter.hasInvoice !== undefined) {
       result = result.filter((l) =>
         filter.hasInvoice
-          ? l.hasInvoice === 'upload_now' || l.hasInvoice === 'later' || l.files.some((f) => f.category === 'invoice')
+          ? l.hasInvoice === 'upload_now' ||
+            l.hasInvoice === 'later' ||
+            l.files.some((f) => f.category === 'invoice')
           : l.hasInvoice === 'no',
       );
     }
@@ -180,11 +205,11 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
     name?: string;
     postalCode?: string;
   }): Promise<Lead | null> {
-    const db = await this.readDb();
+    const leads = await this.all<Lead>('leads');
     const email = args.email?.toLowerCase().trim();
     const phone = args.phone?.replace(/\D/g, '');
     return (
-      db.leads.find((l) => {
+      leads.find((l) => {
         if (email && l.email?.toLowerCase().trim() === email) return true;
         if (phone && l.phone?.replace(/\D/g, '') === phone) return true;
         if (
@@ -202,134 +227,115 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
   // ─── Research ───────────────────────────────────────────────────────────
 
   async createResearch(p: ResearchProspect): Promise<ResearchProspect> {
-    return this.mutate((db) => {
-      db.research.unshift(p);
-      return p;
-    });
+    return this.insert('research', p);
   }
 
-  async updateResearch(id: ResearchId, patch: Partial<ResearchProspect>): Promise<ResearchProspect | null> {
-    return this.mutate((db) => {
-      const idx = db.research.findIndex((r) => r.id === id);
-      if (idx === -1) return null;
-      const existing = db.research[idx]!;
-      const updated: ResearchProspect = { ...existing, ...patch, updatedAt: new Date().toISOString() };
-      db.research[idx] = updated;
-      return updated;
-    });
+  async updateResearch(
+    id: ResearchId,
+    patch: Partial<ResearchProspect>,
+  ): Promise<ResearchProspect | null> {
+    return this.patch<ResearchProspect>('research', id, patch);
   }
 
   async getResearch(id: ResearchId): Promise<ResearchProspect | null> {
-    const db = await this.readDb();
-    return db.research.find((r) => r.id === id) ?? null;
+    return this.one<ResearchProspect>('research', id);
   }
 
   async listResearch(): Promise<ResearchProspect[]> {
-    const db = await this.readDb();
-    return db.research;
+    return this.all<ResearchProspect>('research');
   }
 
   // ─── Audit ──────────────────────────────────────────────────────────────
 
   async appendAudit(entry: AuditEntry): Promise<void> {
-    await this.mutate((db) => {
-      db.audit.unshift(entry);
-      // Audit ist append-only, aber im JSON beschränken wir die letzten 5000.
-      if (db.audit.length > 5000) db.audit.length = 5000;
-    });
+    await this.insert('audit', entry);
+    // Append-only, aber Retention auf die letzten 5000 Einträge begrenzen.
+    await sql.query(
+      `DELETE FROM audit WHERE seq <= (
+         SELECT seq FROM audit ORDER BY seq DESC OFFSET 5000 LIMIT 1
+       )`,
+    );
   }
 
   async listAudit(limit = 200): Promise<AuditEntry[]> {
-    const db = await this.readDb();
-    return db.audit.slice(0, limit);
+    const { rows } = await sql.query(
+      `SELECT data FROM audit ORDER BY seq DESC LIMIT $1`,
+      [limit],
+    );
+    return rows.map((r) => r.data as AuditEntry);
   }
 
   // ─── Users ──────────────────────────────────────────────────────────────
 
   async getUserByEmail(email: string): Promise<AdminUser | null> {
-    const db = await this.readDb();
     const e = email.toLowerCase().trim();
-    return db.users.find((u) => (u.email ?? '').toLowerCase() === e) ?? null;
+    const { rows } = await sql.query(
+      `SELECT data FROM users WHERE lower(data->>'email') = $1 LIMIT 1`,
+      [e],
+    );
+    return (rows[0]?.data as AdminUser) ?? null;
   }
 
   async getUserByUsername(username: string): Promise<AdminUser | null> {
-    const db = await this.readDb();
     const u = username.toLowerCase().trim();
-    return db.users.find((x) => (x.username ?? '').toLowerCase() === u) ?? null;
+    const { rows } = await sql.query(
+      `SELECT data FROM users WHERE lower(data->>'username') = $1 LIMIT 1`,
+      [u],
+    );
+    return (rows[0]?.data as AdminUser) ?? null;
   }
 
   async getUser(id: UserId): Promise<AdminUser | null> {
-    const db = await this.readDb();
-    return db.users.find((u) => u.id === id) ?? null;
+    return this.one<AdminUser>('users', id);
   }
 
   async listUsers(): Promise<AdminUser[]> {
-    const db = await this.readDb();
-    return db.users;
+    return this.all<AdminUser>('users', 'ASC');
   }
 
   async upsertUser(user: AdminUser): Promise<AdminUser> {
-    return this.mutate((db) => {
-      const idx = db.users.findIndex((u) => u.id === user.id);
-      if (idx === -1) db.users.push(user);
-      else db.users[idx] = user;
-      return user;
-    });
+    return this.upsert('users', user);
   }
 
   async updateUser(id: UserId, patch: Partial<AdminUser>): Promise<AdminUser | null> {
-    return this.mutate((db) => {
-      const idx = db.users.findIndex((u) => u.id === id);
-      if (idx === -1) return null;
-      const existing = db.users[idx]!;
-      const updated: AdminUser = { ...existing, ...patch };
-      db.users[idx] = updated;
-      return updated;
-    });
+    return this.patch<AdminUser>('users', id, patch, false);
   }
 
   // ─── Events ─────────────────────────────────────────────────────────────
 
   async appendEvent(event: FunnelEvent): Promise<void> {
-    await this.mutate((db) => {
-      db.events.unshift(event);
-      if (db.events.length > 50_000) db.events.length = 50_000;
-    });
+    await this.insert('events', event);
+    await sql.query(
+      `DELETE FROM events WHERE seq <= (
+         SELECT seq FROM events ORDER BY seq DESC OFFSET 50000 LIMIT 1
+       )`,
+    );
   }
 
   async listEvents(limit = 5000): Promise<FunnelEvent[]> {
-    const db = await this.readDb();
-    return db.events.slice(0, limit);
+    const { rows } = await sql.query(
+      `SELECT data FROM events ORDER BY seq DESC LIMIT $1`,
+      [limit],
+    );
+    return rows.map((r) => r.data as FunnelEvent);
   }
 
   // ─── Partner ────────────────────────────────────────────────────────────
 
   async createPartner(p: Partner): Promise<Partner> {
-    return this.mutate((db) => {
-      db.partners.unshift(p);
-      return p;
-    });
+    return this.insert('partners', p);
   }
 
   async updatePartner(id: PartnerId, patch: Partial<Partner>): Promise<Partner | null> {
-    return this.mutate((db) => {
-      const idx = db.partners.findIndex((p) => p.id === id);
-      if (idx === -1) return null;
-      const existing = db.partners[idx]!;
-      const updated: Partner = { ...existing, ...patch, updatedAt: new Date().toISOString() };
-      db.partners[idx] = updated;
-      return updated;
-    });
+    return this.patch<Partner>('partners', id, patch);
   }
 
   async getPartner(id: PartnerId): Promise<Partner | null> {
-    const db = await this.readDb();
-    return db.partners.find((p) => p.id === id) ?? null;
+    return this.one<Partner>('partners', id);
   }
 
   async listPartners(filter: PartnerFilter = {}): Promise<Partner[]> {
-    const db = await this.readDb();
-    let result = db.partners;
+    let result = await this.all<Partner>('partners');
     if (filter.statuses?.length) result = result.filter((p) => filter.statuses!.includes(p.status));
     if (filter.search) {
       const q = filter.search.toLowerCase();
@@ -344,41 +350,25 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
   }
 
   async deletePartner(id: PartnerId): Promise<boolean> {
-    return this.mutate((db) => {
-      const before = db.partners.length;
-      db.partners = db.partners.filter((p) => p.id !== id);
-      return db.partners.length !== before;
-    });
+    return this.remove('partners', id);
   }
 
   // ─── Tasks ──────────────────────────────────────────────────────────────
 
   async createTask(t: Task): Promise<Task> {
-    return this.mutate((db) => {
-      db.tasks.unshift(t);
-      return t;
-    });
+    return this.insert('tasks', t);
   }
 
   async updateTask(id: TaskId, patch: Partial<Task>): Promise<Task | null> {
-    return this.mutate((db) => {
-      const idx = db.tasks.findIndex((t) => t.id === id);
-      if (idx === -1) return null;
-      const existing = db.tasks[idx]!;
-      const updated: Task = { ...existing, ...patch, updatedAt: new Date().toISOString() };
-      db.tasks[idx] = updated;
-      return updated;
-    });
+    return this.patch<Task>('tasks', id, patch);
   }
 
   async getTask(id: TaskId): Promise<Task | null> {
-    const db = await this.readDb();
-    return db.tasks.find((t) => t.id === id) ?? null;
+    return this.one<Task>('tasks', id);
   }
 
   async listTasks(filter: TaskFilter = {}): Promise<Task[]> {
-    const db = await this.readDb();
-    let result = db.tasks;
+    let result = await this.all<Task>('tasks');
     if (filter.statuses?.length) result = result.filter((t) => filter.statuses!.includes(t.status));
     if (filter.ownerId) result = result.filter((t) => t.ownerId === filter.ownerId);
     if (filter.partnerId) result = result.filter((t) => t.partnerId === filter.partnerId);
@@ -387,41 +377,25 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
   }
 
   async deleteTask(id: TaskId): Promise<boolean> {
-    return this.mutate((db) => {
-      const before = db.tasks.length;
-      db.tasks = db.tasks.filter((t) => t.id !== id);
-      return db.tasks.length !== before;
-    });
+    return this.remove('tasks', id);
   }
 
   // ─── Deals ──────────────────────────────────────────────────────────────
 
   async createDeal(d: Deal): Promise<Deal> {
-    return this.mutate((db) => {
-      db.deals.unshift(d);
-      return d;
-    });
+    return this.insert('deals', d);
   }
 
   async updateDeal(id: DealId, patch: Partial<Deal>): Promise<Deal | null> {
-    return this.mutate((db) => {
-      const idx = db.deals.findIndex((d) => d.id === id);
-      if (idx === -1) return null;
-      const existing = db.deals[idx]!;
-      const updated: Deal = { ...existing, ...patch, updatedAt: new Date().toISOString() };
-      db.deals[idx] = updated;
-      return updated;
-    });
+    return this.patch<Deal>('deals', id, patch);
   }
 
   async getDeal(id: DealId): Promise<Deal | null> {
-    const db = await this.readDb();
-    return db.deals.find((d) => d.id === id) ?? null;
+    return this.one<Deal>('deals', id);
   }
 
   async listDeals(filter: DealFilter = {}): Promise<Deal[]> {
-    const db = await this.readDb();
-    let result = db.deals;
+    let result = await this.all<Deal>('deals');
     if (filter.statuses?.length) result = result.filter((d) => filter.statuses!.includes(d.status));
     if (filter.partnerId) result = result.filter((d) => d.partnerId === filter.partnerId);
     if (filter.leadId) result = result.filter((d) => d.leadId === filter.leadId);
@@ -431,31 +405,22 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
   // ─── Commissions ────────────────────────────────────────────────────────
 
   async createCommission(c: Commission): Promise<Commission> {
-    return this.mutate((db) => {
-      db.commissions.unshift(c);
-      return c;
-    });
+    return this.insert('commissions', c);
   }
 
-  async updateCommission(id: CommissionId, patch: Partial<Commission>): Promise<Commission | null> {
-    return this.mutate((db) => {
-      const idx = db.commissions.findIndex((c) => c.id === id);
-      if (idx === -1) return null;
-      const existing = db.commissions[idx]!;
-      const updated: Commission = { ...existing, ...patch, updatedAt: new Date().toISOString() };
-      db.commissions[idx] = updated;
-      return updated;
-    });
+  async updateCommission(
+    id: CommissionId,
+    patch: Partial<Commission>,
+  ): Promise<Commission | null> {
+    return this.patch<Commission>('commissions', id, patch);
   }
 
   async getCommission(id: CommissionId): Promise<Commission | null> {
-    const db = await this.readDb();
-    return db.commissions.find((c) => c.id === id) ?? null;
+    return this.one<Commission>('commissions', id);
   }
 
   async listCommissions(filter: CommissionFilter = {}): Promise<Commission[]> {
-    const db = await this.readDb();
-    let result = db.commissions;
+    let result = await this.all<Commission>('commissions');
     if (filter.statuses?.length) result = result.filter((c) => filter.statuses!.includes(c.status));
     if (filter.partnerId) result = result.filter((c) => c.partnerId === filter.partnerId);
     return result;

@@ -87,6 +87,7 @@ export interface StorageAdapter {
 
   // Users
   getUserByEmail(email: string): Promise<AdminUser | null>;
+  getUserByUsername(username: string): Promise<AdminUser | null>;
   getUser(id: UserId): Promise<AdminUser | null>;
   listUsers(): Promise<AdminUser[]>;
   upsertUser(user: AdminUser): Promise<AdminUser>;

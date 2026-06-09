@@ -9,22 +9,25 @@ async function main() {
   const storage = getStorage();
 
   const email = process.env.ADMIN_BOOTSTRAP_EMAIL ?? 'admin@example.com';
+  const username = process.env.ADMIN_BOOTSTRAP_USERNAME ?? 'admin';
   const password = process.env.ADMIN_BOOTSTRAP_PASSWORD ?? 'changeme1234!';
-  const existing = await storage.getUserByEmail(email);
+  const existing = await storage.getUserByUsername(username);
   if (!existing) {
     const user: AdminUser = {
       id: newId('usr') as UserId,
+      username,
       email,
       name: 'Admin',
       role: 'admin',
       passwordHash: await hashPassword(password),
       createdAt: nowIso(),
       failedLoginCount: 0,
+      mustChangePassword: false,
     };
     await storage.upsertUser(user);
-    console.log(`Admin angelegt: ${email}`);
+    console.log(`Admin angelegt: ${username}`);
   } else {
-    console.log(`Admin existiert bereits: ${email}`);
+    console.log(`Admin existiert bereits: ${username}`);
   }
 
   // Demo-Leads, deutlich als isDemo=true markiert.

@@ -8,8 +8,12 @@ const MAX_AGE_SEC = 60 * 60 * 8; // 8h Idle, einfach gehalten
 
 export interface Session {
   userId: string;
-  email: string;
+  username: string;
+  email?: string;
+  name?: string;
   role: Role;
+  /** Erzwungene Passwortänderung offen (z. B. Partner-Erstlogin). */
+  mustChangePassword?: boolean;
   iat: number;
   exp: number;
 }
