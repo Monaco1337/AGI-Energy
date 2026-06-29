@@ -74,6 +74,8 @@ export interface StorageAdapter {
     name?: string;
     postalCode?: string;
   }): Promise<Lead | null>;
+  /** Findet einen Lead anhand seines persoenlichen Empfehlungscodes. */
+  findLeadByReferralCode(code: string): Promise<Lead | null>;
 
   // Research
   createResearch(p: ResearchProspect): Promise<ResearchProspect>;

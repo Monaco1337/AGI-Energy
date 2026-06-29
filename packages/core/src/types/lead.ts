@@ -140,6 +140,16 @@ export interface Lead {
   utmMedium?: string;
   utmCampaign?: string;
 
+  /**
+   * Persoenlicher Empfehlungscode dieses Leads (eigener Code).
+   * Wird beim ersten Speichern erzeugt und unter /empfehlung/[code] verwendet.
+   */
+  referralCode?: string;
+  /** Falls der Lead ueber einen Empfehlungscode reinkam: Code des werbenden Leads. */
+  referredByCode?: string;
+  /** Lead-Id des werbenden Leads (resolved beim Submit). */
+  referredByLeadId?: LeadId;
+
   customerType: CustomerType;
   interests: Interest[];
   urgency: Urgency;

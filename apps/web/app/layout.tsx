@@ -40,6 +40,11 @@ export const metadata: Metadata = {
     title: 'AGI Energy',
     statusBarStyle: 'black-translucent',
   },
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
   robots: { index: true, follow: true },
   alternates: {
     canonical: '/',

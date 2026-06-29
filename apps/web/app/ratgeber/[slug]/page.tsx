@@ -11,6 +11,7 @@ import {
   articleSchema,
   breadcrumbSchema,
   faqSchema,
+  howToSchema,
   jsonLdScriptProps,
 } from '@/lib/seoSchemas';
 
@@ -64,6 +65,15 @@ export default async function RatgeberArtikelPage(
       ]))} />
       {article.faq?.length ? (
         <script {...jsonLdScriptProps(faqSchema(article.faq))} />
+      ) : null}
+      {article.howTo ? (
+        <script {...jsonLdScriptProps(howToSchema({
+          path,
+          name: article.howTo.name,
+          description: article.howTo.description,
+          totalTimeMinutes: article.howTo.totalTimeMinutes,
+          steps: article.howTo.steps,
+        }))} />
       ) : null}
 
       <Header />

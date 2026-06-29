@@ -244,6 +244,13 @@ export class PostgresStorageAdapter implements StorageAdapter {
     );
   }
 
+  async findLeadByReferralCode(code: string): Promise<Lead | null> {
+    if (!code) return null;
+    const norm = code.trim().toUpperCase();
+    const leads = await this.all<Lead>('leads');
+    return leads.find((l) => l.referralCode === norm) ?? null;
+  }
+
   // ─── Research ───────────────────────────────────────────────────────────
 
   async createResearch(p: ResearchProspect): Promise<ResearchProspect> {

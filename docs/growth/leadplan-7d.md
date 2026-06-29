@@ -1267,7 +1267,10 @@ Drop-Off pro Stufe als Prozent + absolut.
 - Neue Intent-Landingpages (No-Spend SEO): `apps/web/app/{jahresabrechnung-pruefen,stromvertrag-pruefen,gasvertrag-pruefen,anbieterwechsel-pruefen}/page.tsx`
 - FAQ-Hub: `apps/web/app/fragen-antworten/page.tsx` + `apps/web/data/energyFaq.ts`
 - Ratgeber-System: `apps/web/app/ratgeber/page.tsx`, `apps/web/app/ratgeber/[slug]/page.tsx`, `apps/web/data/ratgeberArticles.ts`
-- SEO-Schemas (Organization, Service, FAQ, Article, Breadcrumb): `apps/web/lib/seoSchemas.ts`
+- Glossar: `apps/web/app/glossar/page.tsx`, `apps/web/app/glossar/[slug]/page.tsx`, `apps/web/data/energyGlossary.ts`
+- Programmatic Local SEO: `apps/web/app/energieberatung/page.tsx`, `apps/web/app/energieberatung/[stadt]/page.tsx`, `apps/web/data/germanCities.ts`
+- Empfehlungssystem: `apps/web/app/empfehlung/[code]/page.tsx`, `apps/web/components/landing/ReferralCookieSetter.tsx`, `packages/core/src/util/id.ts` (`newReferralCode`)
+- SEO-Schemas (Organization, Service, FAQ, Article, HowTo, DefinedTerm, LocalBusiness, Breadcrumb): `apps/web/lib/seoSchemas.ts`
 - Sitemap: `apps/web/app/sitemap.ts` (Site-URL haerter verankert auf agienergy.de)
 - Robots: `apps/web/app/robots.ts`
 - Consent-Modal: `apps/web/components/landing/ConsentBanner.tsx`
@@ -1309,7 +1312,10 @@ Realistischer Korridor ohne Werbebudget:
 - **Sitemap auf Default-URL `https://www.agienergy.de` haerter verankert** - Search-Console-Problem (vorher `localhost`) ist auch ohne Vercel-Env gefixt.
 - **Footer-Block "Schnellprüfung"** verlinkt die 4 neuen LPs sitewide - massiver Internal-Linking-Effekt.
 - **FAQ-Hub `/fragen-antworten`** - 6 Kategorien, ~25 Fragen, eigenes FAQ-Schema. Topic-Authority-Pilar, kandidiert fuer Sitelinks.
-- **Ratgeber-System `/ratgeber/[slug]`** - 3 substanzielle Long-Tail-Artikel mit Article-, Breadcrumb- und FAQ-Schema. Skaliert linear: jeder weitere Artikel wird automatisch in Index + Sitemap aufgenommen.
+- **Ratgeber-System `/ratgeber/[slug]`** - 9 substanzielle Long-Tail-Artikel mit Article-, Breadcrumb-, FAQ- und teilweise HowTo-Schema. Skaliert linear: jeder weitere Artikel wird automatisch in Index + Sitemap aufgenommen.
+- **Glossar `/glossar/[term]`** - ~40 Fachbegriffe mit DefinedTerm-Schema. Decken Long-Tail-Suchanfragen wie "arbeitspreis", "smart meter", "preisgarantie", "co2-preis" etc. ab.
+- **Programmatic Local SEO `/energieberatung/[stadt]`** - 100+ deutsche Staedte (Berlin, Muenchen, Koeln ... bis Ravensburg) mit LocalBusiness-Schema, FAQ-Schema, Service-Schema, geografischer Nachbarstadt-Verlinkung und stadt-spezifischer Postleitzahlen-Kontextualisierung. Konkurriert auf "Energieberatung [Stadt]"-Suchen.
+- **Empfehlungssystem** - Jeder Lead bekommt automatisch einen lesbaren Empfehlungscode (`newReferralCode()`); ueber `/empfehlung/[code]` werden geworbene Leads automatisch als `source: 'referral'` kategorisiert, im Admin Lead-Drawer sichtbar (Codes + werbender Lead). Cookie-Pickup beim Form-Submit. Empfehlungs-Leads konvertieren typisch 3-5x besser als Cold-Traffic.
 
 ### B3. Was der Inhaber/Betreiber manuell tun muss (kein Code, je 30-60 Min)
 

@@ -160,6 +160,111 @@ export function articleSchema({
   };
 }
 
+interface DefinedTermSchemaInput {
+  path: string;
+  term: string;
+  definition: string;
+  category?: string;
+}
+
+export function definedTermSchema({ path, term, definition, category }: DefinedTermSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'DefinedTerm',
+    '@id': `${SITE_URL}${path}#term`,
+    name: term,
+    description: definition,
+    inDefinedTermSet: {
+      '@type': 'DefinedTermSet',
+      name: 'AGI Energy – Energie-Glossar',
+      url: `${SITE_URL}/glossar`,
+    },
+    ...(category ? { termCode: category } : {}),
+  };
+}
+
+interface HowToStepInput {
+  name: string;
+  text: string;
+}
+
+interface HowToSchemaInput {
+  path: string;
+  name: string;
+  description: string;
+  totalTimeMinutes?: number;
+  steps: HowToStepInput[];
+}
+
+export function howToSchema({ path, name, description, totalTimeMinutes, steps }: HowToSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    '@id': `${SITE_URL}${path}#howto`,
+    name,
+    description,
+    ...(totalTimeMinutes ? { totalTime: `PT${totalTimeMinutes}M` } : {}),
+    step: steps.map((s, idx) => ({
+      '@type': 'HowToStep',
+      position: idx + 1,
+      name: s.name,
+      text: s.text,
+    })),
+  };
+}
+
+interface LocalBusinessSchemaInput {
+  path: string;
+  city: string;
+  postalCodePrefix?: string;
+  region: string;
+  lat?: number;
+  lng?: number;
+}
+
+export function localBusinessSchema({
+  path,
+  city,
+  region,
+  postalCodePrefix,
+  lat,
+  lng,
+}: LocalBusinessSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    '@id': `${SITE_URL}${path}#localbusiness`,
+    name: `AGI Energy – Energieberatung ${city}`,
+    description: `Persönliche Energieprüfung für Strom, Gas, Photovoltaik und Gewerbe in ${city} und Umgebung. Ohne automatische Vertragsumstellung.`,
+    url: `${SITE_URL}${path}`,
+    image: `${SITE_URL}/icon-512`,
+    areaServed: {
+      '@type': 'City',
+      name: city,
+      containedInPlace: { '@type': 'AdministrativeArea', name: region },
+    },
+    ...(lat && lng
+      ? {
+          geo: {
+            '@type': 'GeoCoordinates',
+            latitude: lat,
+            longitude: lng,
+          },
+        }
+      : {}),
+    ...(postalCodePrefix
+      ? {
+          serviceArea: {
+            '@type': 'GeoCircle',
+            geoMidpoint: lat && lng ? { '@type': 'GeoCoordinates', latitude: lat, longitude: lng } : undefined,
+            description: `Postleitzahlenraum ${postalCodePrefix}*`,
+          },
+        }
+      : {}),
+    parentOrganization: { '@id': `${SITE_URL}/#organization` },
+  };
+}
+
 export function jsonLdScriptProps(payload: unknown) {
   return {
     type: 'application/ld+json',

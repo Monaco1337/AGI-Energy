@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
   newId,
+  newReferralCode,
   nowIso,
   CONSENT_TEXT_VERSION,
   type Lead,
@@ -32,6 +33,8 @@ const schema = z.object({
   createdAt: z.string().max(40).optional(),
   /** Honeypot – muss leer bleiben */
   company: z.string().max(0).optional(),
+  /** Optional: Empfehlungscode (aus Cookie oder Direkt-Link). */
+  referredByCode: z.string().min(4).max(16).optional(),
 });
 
 const CATEGORY_MAP: Record<
@@ -114,12 +117,28 @@ export async function POST(req: Request) {
   const score = scoreLead(funnelInput);
   const id = newId('lead') as LeadId;
 
+  // Empfehlungs-Resolving
+  const storage = getStorage();
+  let referredByLeadId: LeadId | undefined;
+  if (d.referredByCode) {
+    try {
+      const ref = await storage.findLeadByReferralCode(d.referredByCode);
+      if (ref) referredByLeadId = ref.id;
+    } catch {
+      /* nicht blockieren */
+    }
+  }
+  const ownReferralCode = newReferralCode();
+
   const lead: Lead = {
     id,
     createdAt: now,
     updatedAt: now,
-    source: 'website',
+    source: referredByLeadId ? 'referral' : 'website',
     sourceDetails: d.source ?? 'landingpage-hero',
+    referralCode: ownReferralCode,
+    ...(d.referredByCode ? { referredByCode: d.referredByCode.toUpperCase() } : {}),
+    ...(referredByLeadId ? { referredByLeadId } : {}),
 
     customerType: map.customerType,
     interests: map.interests,
@@ -171,7 +190,6 @@ export async function POST(req: Request) {
   };
 
   try {
-    const storage = getStorage();
     await storage.createLead(lead);
   } catch {
     return NextResponse.json(

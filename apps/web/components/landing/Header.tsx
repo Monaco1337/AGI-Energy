@@ -31,7 +31,9 @@ const HERO_FULLBLEED_PATHS = new Set([
 
 export function Header() {
   const pathname = usePathname();
-  const heroFullBleed = HERO_FULLBLEED_PATHS.has(pathname ?? '');
+  const heroFullBleed =
+    HERO_FULLBLEED_PATHS.has(pathname ?? '') ||
+    (pathname?.startsWith('/energieberatung/') ?? false);
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const showGlassBar = scrolled || !heroFullBleed;

@@ -220,6 +220,40 @@ export function LeadDrawer({
             )}
           </section>
 
+          {(lead.referralCode || lead.referredByCode) && (
+            <section className="ops-card p-5">
+              <h3 className="font-display text-[16px] text-[var(--ops-text)]">Empfehlungssystem</h3>
+              {lead.referredByCode ? (
+                <div className="mt-3">
+                  <div className="text-[11.5px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">
+                    Geworben über
+                  </div>
+                  <p className="mt-1 text-[14px] text-[var(--ops-text)] font-mono">
+                    {lead.referredByCode}
+                  </p>
+                  {lead.referredByLeadId && (
+                    <p className="mt-1 text-[12px] text-[var(--ops-muted)] break-all">
+                      Empfehler-Lead: {lead.referredByLeadId}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+              {lead.referralCode ? (
+                <div className="mt-4 pt-4 border-t border-[var(--ops-border)]">
+                  <div className="text-[11.5px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">
+                    Eigener Empfehlungscode
+                  </div>
+                  <p className="mt-1 text-[14px] text-[var(--ops-text)] font-mono tracking-wider">
+                    {lead.referralCode}
+                  </p>
+                  <p className="mt-1 text-[12px] text-[var(--ops-muted)]">
+                    Link: /empfehlung/{lead.referralCode}
+                  </p>
+                </div>
+              ) : null}
+            </section>
+          )}
+
           {canEdit && (
             <section className="ops-card p-5">
               <h3 className="font-display text-[16px] text-[var(--ops-text)]">Status ändern</h3>

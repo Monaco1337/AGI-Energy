@@ -164,8 +164,20 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link className={`${linkCls} group`} href="/glossar">
+                Glossar
+                <ArrowIcon />
+              </Link>
+            </li>
+            <li>
               <Link className={`${linkCls} group`} href="/fragen-antworten">
                 Fragen & Antworten
+                <ArrowIcon />
+              </Link>
+            </li>
+            <li>
+              <Link className={`${linkCls} group`} href="/energieberatung">
+                Städte-Übersicht
                 <ArrowIcon />
               </Link>
             </li>

@@ -7,6 +7,7 @@ import {
   CONSENT_TEXT_VERSION,
   hashIp,
   newId,
+  newReferralCode,
   nowIso,
   schemas,
   type Lead,
@@ -25,6 +26,8 @@ const payloadSchema = z.object({
   state: z.record(z.unknown()),
   consentTextVersion: z.string().min(1),
   submittedAtMs: z.number().int().nonnegative(),
+  /** Optional: Empfehlungscode des werbenden Leads (aus /empfehlung/[code]). */
+  referredByCode: z.string().min(4).max(16).optional(),
 });
 
 export interface SubmitResult {
@@ -126,11 +129,23 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
 
   const id = newId('lead') as LeadId;
   const now = nowIso();
+
+  // Empfehlungssystem: Eigener Code immer setzen; werbenden Lead bei Vorhandensein aufloesen.
+  const ownReferralCode = newReferralCode();
+  let referredByLeadId: LeadId | undefined;
+  if (payload.referredByCode) {
+    const referrer = await storage.findLeadByReferralCode(payload.referredByCode);
+    if (referrer) referredByLeadId = referrer.id;
+  }
+
   const lead: Lead = {
     id,
     createdAt: now,
     updatedAt: now,
-    source: input.source,
+    source: referredByLeadId ? 'referral' : input.source,
+    referralCode: ownReferralCode,
+    ...(payload.referredByCode ? { referredByCode: payload.referredByCode.toUpperCase() } : {}),
+    ...(referredByLeadId ? { referredByLeadId } : {}),
     customerType: input.customerType,
     interests: input.interests,
     urgency: input.urgency,

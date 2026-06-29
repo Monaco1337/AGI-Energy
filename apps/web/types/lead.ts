@@ -20,6 +20,8 @@ export interface LeadPayload {
   consent: boolean;
   source: 'landingpage-hero';
   createdAt: string;
+  /** Optional: Empfehlungscode (clientseitig aus Cookie nachgereicht). */
+  referredByCode?: string;
 }
 
 export interface LeadFormErrors {

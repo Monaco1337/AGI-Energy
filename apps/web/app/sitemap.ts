@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/seoSchemas';
 import { RATGEBER_ARTICLES } from '@/data/ratgeberArticles';
+import { GLOSSARY } from '@/data/energyGlossary';
+import { CITIES } from '@/data/germanCities';
 
 interface SitemapEntry {
   path: string;
@@ -27,6 +29,8 @@ const STATIC_ENTRIES: SitemapEntry[] = [
   // Hilfsseiten / Topic-Authority
   { path: '/fragen-antworten', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/ratgeber', priority: 0.7, changeFrequency: 'weekly' },
+  { path: '/glossar', priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/energieberatung', priority: 0.75, changeFrequency: 'weekly' },
 
   // Rechtliche Pflicht-/Hilfsseiten
   { path: '/datenschutz', priority: 0.3, changeFrequency: 'yearly' },
@@ -35,6 +39,7 @@ const STATIC_ENTRIES: SitemapEntry[] = [
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
+
   const articleEntries: SitemapEntry[] = RATGEBER_ARTICLES.map((a) => ({
     path: `/ratgeber/${a.slug}`,
     priority: 0.6,
@@ -42,7 +47,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(a.publishedAt),
   }));
 
-  return [...STATIC_ENTRIES, ...articleEntries].map((e) => ({
+  const glossaryEntries: SitemapEntry[] = GLOSSARY.map((g) => ({
+    path: `/glossar/${g.slug}`,
+    priority: 0.4,
+    changeFrequency: 'monthly',
+  }));
+
+  const cityEntries: SitemapEntry[] = CITIES.map((c) => ({
+    path: `/energieberatung/${c.slug}`,
+    priority: 0.55,
+    changeFrequency: 'monthly',
+  }));
+
+  return [
+    ...STATIC_ENTRIES,
+    ...articleEntries,
+    ...glossaryEntries,
+    ...cityEntries,
+  ].map((e) => ({
     url: `${SITE_URL}${e.path}`,
     lastModified: e.lastModified ?? now,
     changeFrequency: e.changeFrequency,

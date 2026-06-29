@@ -199,6 +199,13 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
     );
   }
 
+  async findLeadByReferralCode(code: string): Promise<Lead | null> {
+    if (!code) return null;
+    const db = await this.readDb();
+    const norm = code.trim().toUpperCase();
+    return db.leads.find((l) => l.referralCode === norm) ?? null;
+  }
+
   // ─── Research ───────────────────────────────────────────────────────────
 
   async createResearch(p: ResearchProspect): Promise<ResearchProspect> {

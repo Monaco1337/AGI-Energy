@@ -23,6 +23,7 @@ export function createSupabaseAdapter(_config: { url: string; serviceKey: string
     listLeads: m('listLeads'),
     deleteLead: m('deleteLead'),
     findDuplicate: m('findDuplicate'),
+    findLeadByReferralCode: m('findLeadByReferralCode'),
     createResearch: m('createResearch'),
     updateResearch: m('updateResearch'),
     getResearch: m('getResearch'),
