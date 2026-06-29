@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button, Checkbox, Field, GlassCard } from '@elo/ui';
 import { energyLandingContent } from '@/data/energyLandingContent';
 import { validateLeadForm, toLeadPayload } from '@/lib/leadValidation';
@@ -37,6 +38,7 @@ export function EnergyLeadForm({
   onCategoryChange,
 }: EnergyLeadFormProps) {
   const c = energyLandingContent.leadForm;
+  const router = useRouter();
   const [category, setCategory] = React.useState<LeadCategory | null>(defaultCategory);
   const [name, setName] = React.useState('');
   const [phone, setPhone] = React.useState('');
@@ -95,8 +97,12 @@ export function EnergyLeadForm({
     }
     setStatus('submitting');
     try {
-      await submitLandingLead(payload);
+      const result = await submitLandingLead(payload);
       setStatus('success');
+      if (result.referralCode) {
+        const qs = `?ref=${encodeURIComponent(result.referralCode)}`;
+        router.push(`/danke${qs}`);
+      }
     } catch {
       setStatus('error');
       setErrors({

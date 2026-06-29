@@ -1,4 +1,4 @@
-import type { Lead } from '@elo/core';
+import type { Lead, Subscriber } from '@elo/core';
 import type { MailMessage } from './types';
 
 const wrap = (title: string, body: string): string => `
@@ -65,6 +65,81 @@ export function followUpReminder(lead: Lead, salesInbox: string): MailMessage {
   const text = `Erinnerung: Follow-up für ${lead.firstName} ${lead.lastName} (Score ${lead.leadScore}, ${lead.leadColor}) ist fällig.
 Empfohlene Aktion: ${lead.recommendedAction}`;
   return { to: salesInbox, subject, text };
+}
+
+/**
+ * Double-Opt-In-Bestaetigungsmail fuer einen Newsletter-Abonnenten.
+ * Pflicht nach DSGVO/UWG: Erst nach Klick auf den Bestaetigungslink
+ * darf die Adresse fuer Werbung verwendet werden.
+ */
+export function newsletterConfirm(
+  subscriber: Subscriber,
+  siteUrl: string,
+): MailMessage {
+  const confirmUrl = `${siteUrl}/newsletter/bestaetigen?token=${encodeURIComponent(subscriber.confirmToken)}`;
+  const unsubUrl = `${siteUrl}/newsletter/abmelden?token=${encodeURIComponent(subscriber.unsubscribeToken)}`;
+  const name = subscriber.firstName ? ` ${subscriber.firstName}` : '';
+  const subject = 'Bitte Newsletter-Anmeldung bestaetigen';
+  const text = `Hallo${name},
+
+vielen Dank fuer Ihr Interesse am AGI-Energy-Newsletter. Bitte bestaetigen Sie Ihre Anmeldung mit einem Klick:
+
+${confirmUrl}
+
+Sie erhalten kuenftig kompakte Tipps zu Strom, Gas und Photovoltaik. Keine Werbeflut, keine Daten an Dritte.
+Wenn Sie diese Mail nicht angefordert haben, ignorieren Sie sie einfach - dann passiert nichts.
+
+Abmelden jederzeit moeglich: ${unsubUrl}
+
+Mit freundlichen Gruessen
+AGI Energy`;
+  const html = wrap(
+    'Bitte Newsletter-Anmeldung bestaetigen',
+    `<p>Hallo${escape(name)},</p>
+     <p>vielen Dank fuer Ihr Interesse am AGI-Energy-Newsletter. Bitte bestaetigen Sie Ihre Anmeldung mit einem Klick:</p>
+     <p style="text-align:center;margin:24px 0;">
+       <a href="${confirmUrl}" style="display:inline-block;background:#1a1a1a;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">Anmeldung bestaetigen</a>
+     </p>
+     <p style="font-size:12px;color:#6b6b6b;">Oder Link kopieren:<br/><a href="${confirmUrl}">${confirmUrl}</a></p>
+     <p>Sie erhalten kuenftig kompakte Tipps zu Strom, Gas und Photovoltaik. Keine Werbeflut, keine Daten an Dritte.</p>
+     <p style="font-size:12px;color:#6b6b6b;">Wenn Sie diese Mail nicht angefordert haben, ignorieren Sie sie einfach - dann passiert nichts.<br/>
+     Abmelden jederzeit moeglich: <a href="${unsubUrl}">Abmelden</a></p>`,
+  );
+  return { to: subscriber.email, subject, text, html };
+}
+
+/**
+ * Bestaetigungsmail nach erfolgter DOI - kein erneuter Klick noetig.
+ */
+export function newsletterWelcome(
+  subscriber: Subscriber,
+  siteUrl: string,
+): MailMessage {
+  const unsubUrl = `${siteUrl}/newsletter/abmelden?token=${encodeURIComponent(subscriber.unsubscribeToken)}`;
+  const name = subscriber.firstName ? ` ${subscriber.firstName}` : '';
+  const subject = 'Willkommen beim AGI-Energy-Newsletter';
+  const text = `Hallo${name},
+
+vielen Dank, Ihre Anmeldung ist bestaetigt. Sie erhalten ab sofort unsere kompakten Tipps zu Strom, Gas und Photovoltaik.
+
+Falls Sie konkret Geld sparen wollen: Unser kostenloser Energie-Check rechnet Ihnen Ihr Einsparpotenzial auf Basis Ihrer Jahresabrechnung aus.
+${siteUrl}/energiecheck
+
+Abmelden jederzeit moeglich: ${unsubUrl}
+
+Mit freundlichen Gruessen
+AGI Energy`;
+  const html = wrap(
+    'Willkommen beim AGI-Energy-Newsletter',
+    `<p>Hallo${escape(name)},</p>
+     <p>vielen Dank, Ihre Anmeldung ist bestaetigt. Sie erhalten ab sofort unsere kompakten Tipps zu Strom, Gas und Photovoltaik.</p>
+     <p>Falls Sie konkret Geld sparen wollen: Unser kostenloser Energie-Check rechnet Ihnen Ihr Einsparpotenzial auf Basis Ihrer Jahresabrechnung aus.</p>
+     <p style="text-align:center;margin:24px 0;">
+       <a href="${siteUrl}/energiecheck" style="display:inline-block;background:#1a1a1a;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">Energie-Check starten</a>
+     </p>
+     <p style="font-size:12px;color:#6b6b6b;">Abmelden jederzeit moeglich: <a href="${unsubUrl}">Abmelden</a></p>`,
+  );
+  return { to: subscriber.email, subject, text, html };
 }
 
 function escape(s: string): string {

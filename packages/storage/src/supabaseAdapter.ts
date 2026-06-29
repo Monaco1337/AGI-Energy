@@ -56,6 +56,13 @@ export function createSupabaseAdapter(_config: { url: string; serviceKey: string
     updateCommission: m('updateCommission'),
     getCommission: m('getCommission'),
     listCommissions: m('listCommissions'),
+    createSubscriber: m('createSubscriber'),
+    updateSubscriber: m('updateSubscriber'),
+    getSubscriber: m('getSubscriber'),
+    findSubscriberByEmail: m('findSubscriberByEmail'),
+    findSubscriberByConfirmToken: m('findSubscriberByConfirmToken'),
+    findSubscriberByUnsubscribeToken: m('findSubscriberByUnsubscribeToken'),
+    listSubscribers: m('listSubscribers'),
   };
 
   return adapter as unknown as StorageAdapter;

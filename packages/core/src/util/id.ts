@@ -14,6 +14,30 @@ export function nowIso(): string {
 }
 
 /**
+ * URL-sicheres Pseudo-Geheimnis fuer Bestaetigungs-/Abmeldelinks.
+ * Default 32 Zeichen aus a-z, A-Z, 0-9, -, _. Vermeidet Padding.
+ */
+export function newUrlToken(length = 32): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  const len = alphabet.length;
+  const c = (globalThis as { crypto?: Crypto }).crypto;
+  let out = '';
+  if (c && 'getRandomValues' in c) {
+    const buf = new Uint8Array(length);
+    c.getRandomValues(buf);
+    for (let i = 0; i < length; i += 1) {
+      const byte = buf[i] ?? 0;
+      out += alphabet.charAt(byte % len);
+    }
+  } else {
+    for (let i = 0; i < length; i += 1) {
+      out += alphabet.charAt(Math.floor(Math.random() * len));
+    }
+  }
+  return out;
+}
+
+/**
  * Generiert einen menschlich lesbaren, gut teilbaren Empfehlungscode (8 Zeichen,
  * ohne verwechselbare 0/O/1/I/L). Beispiel: "K7H3F2QM".
  */

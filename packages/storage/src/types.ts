@@ -20,6 +20,8 @@ import type {
   Commission,
   CommissionId,
   CommissionStatus,
+  Subscriber,
+  SubscriberStatus,
 } from '@elo/core';
 
 export interface LeadFilter {
@@ -59,6 +61,11 @@ export interface DealFilter {
 export interface CommissionFilter {
   statuses?: CommissionStatus[];
   partnerId?: PartnerId;
+}
+
+export interface SubscriberFilter {
+  statuses?: SubscriberStatus[];
+  search?: string;
 }
 
 export interface StorageAdapter {
@@ -124,4 +131,13 @@ export interface StorageAdapter {
   updateCommission(id: CommissionId, patch: Partial<Commission>): Promise<Commission | null>;
   getCommission(id: CommissionId): Promise<Commission | null>;
   listCommissions(filter?: CommissionFilter): Promise<Commission[]>;
+
+  // Subscribers (Newsletter / Lead-Magnet)
+  createSubscriber(s: Subscriber): Promise<Subscriber>;
+  updateSubscriber(id: string, patch: Partial<Subscriber>): Promise<Subscriber | null>;
+  getSubscriber(id: string): Promise<Subscriber | null>;
+  findSubscriberByEmail(email: string): Promise<Subscriber | null>;
+  findSubscriberByConfirmToken(token: string): Promise<Subscriber | null>;
+  findSubscriberByUnsubscribeToken(token: string): Promise<Subscriber | null>;
+  listSubscribers(filter?: SubscriberFilter): Promise<Subscriber[]>;
 }

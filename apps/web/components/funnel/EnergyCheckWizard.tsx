@@ -119,7 +119,8 @@ export function EnergyCheckWizard() {
       const res = await submitLead(fd);
       if (res.ok) {
         sessionStorage.removeItem(STORAGE_KEY);
-        router.push('/danke');
+        const qs = res.referralCode ? `?ref=${encodeURIComponent(res.referralCode)}` : '';
+        router.push(`/danke${qs}`);
       } else {
         setError(res.error ?? 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.');
       }

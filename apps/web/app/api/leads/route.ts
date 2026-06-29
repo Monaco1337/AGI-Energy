@@ -198,5 +198,5 @@ export async function POST(req: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true, id });
+  return NextResponse.json({ ok: true, id, referralCode: ownReferralCode });
 }

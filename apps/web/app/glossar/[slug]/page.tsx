@@ -9,6 +9,8 @@ import {
   definedTermSchema,
   jsonLdScriptProps,
 } from '@/lib/seoSchemas';
+import { linkifyGlossary } from '@/lib/inlineGlossaryLinks';
+import { findRelatedArticlesForTerm } from '@/lib/contentDiscovery';
 
 export function generateStaticParams() {
   return GLOSSARY.map((g) => ({ slug: g.slug }));
@@ -42,6 +44,7 @@ export default async function GlossaryDetailPage(
   if (!entry) notFound();
 
   const path = `/glossar/${entry.slug}`;
+  const relatedArticles = findRelatedArticlesForTerm(entry, 3);
 
   return (
     <>
@@ -81,9 +84,40 @@ export default async function GlossaryDetailPage(
               Im Detail
             </h2>
             <p className="mt-3 text-[15.5px] text-slate leading-[1.8]">
-              {entry.longExplanation}
+              {linkifyGlossary(entry.longExplanation, {
+                excludeSlugs: [entry.slug],
+                maxLinksPerText: 4,
+              })}
             </p>
           </section>
+
+          {relatedArticles.length > 0 ? (
+            <section className="mt-10">
+              <h2 className="font-display text-[18px] font-semibold text-navy tracking-tight">
+                Mehr zum Thema im Ratgeber
+              </h2>
+              <ul className="mt-4 space-y-3">
+                {relatedArticles.map((a) => (
+                  <li key={a.slug}>
+                    <Link
+                      href={`/ratgeber/${a.slug}`}
+                      className="block rounded-elo border border-borderLight bg-white p-4 hover:border-energyGreen/60 transition"
+                    >
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-energyGreen/90">
+                        {a.category} · {a.readingMinutes} Min
+                      </span>
+                      <span className="mt-1.5 block text-[15.5px] font-semibold text-navy leading-snug">
+                        {a.title}
+                      </span>
+                      <span className="mt-2 block text-[13.5px] text-slate leading-relaxed line-clamp-2">
+                        {a.description}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           {entry.related?.length ? (
             <section className="mt-10">

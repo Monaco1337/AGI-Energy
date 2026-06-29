@@ -8,3 +8,4 @@ export * from './partner';
 export * from './task';
 export * from './deal';
 export * from './commission';
+export * from './subscriber';

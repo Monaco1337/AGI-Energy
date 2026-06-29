@@ -14,6 +14,7 @@ import {
   howToSchema,
   jsonLdScriptProps,
 } from '@/lib/seoSchemas';
+import { linkifyGlossary } from '@/lib/inlineGlossaryLinks';
 
 export function generateStaticParams() {
   return RATGEBER_ARTICLES.map((a) => ({ slug: a.slug }));
@@ -95,11 +96,11 @@ export default async function RatgeberArtikelPage(
           </p>
 
           <p className="mt-7 text-[17px] sm:text-[18px] text-navy/85 leading-[1.75]">
-            {article.intro}
+            {linkifyGlossary(article.intro, { maxLinksPerText: 3 })}
           </p>
 
           <div className="mt-10 space-y-9">
-            {article.sections.map((s) => (
+            {article.sections.map((s, idx) => (
               <section key={s.heading ?? s.body.slice(0, 24)}>
                 {s.heading ? (
                   <h2 className="font-display text-[20px] sm:text-[22px] font-semibold text-navy leading-snug tracking-tight">
@@ -107,7 +108,7 @@ export default async function RatgeberArtikelPage(
                   </h2>
                 ) : null}
                 <p className="mt-3 text-[15.5px] text-slate leading-[1.8]">
-                  {s.body}
+                  {linkifyGlossary(s.body, { maxLinksPerText: idx === 0 ? 3 : 2 })}
                 </p>
               </section>
             ))}

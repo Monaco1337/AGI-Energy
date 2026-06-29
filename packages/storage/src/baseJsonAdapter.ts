@@ -15,6 +15,7 @@ import type {
   DealId,
   Commission,
   CommissionId,
+  Subscriber,
 } from '@elo/core';
 import type {
   StorageAdapter,
@@ -23,6 +24,7 @@ import type {
   TaskFilter,
   DealFilter,
   CommissionFilter,
+  SubscriberFilter,
 } from './types';
 
 export interface DbShape {
@@ -35,6 +37,7 @@ export interface DbShape {
   tasks: Task[];
   deals: Deal[];
   commissions: Commission[];
+  subscribers: Subscriber[];
 }
 
 export function emptyDb(): DbShape {
@@ -48,6 +51,7 @@ export function emptyDb(): DbShape {
     tasks: [],
     deals: [],
     commissions: [],
+    subscribers: [],
   };
 }
 
@@ -83,6 +87,7 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
         tasks: parsed.tasks ?? [],
         deals: parsed.deals ?? [],
         commissions: parsed.commissions ?? [],
+        subscribers: parsed.subscribers ?? [],
       };
     } catch {
       return emptyDb();
@@ -465,6 +470,66 @@ export abstract class BaseJsonAdapter implements StorageAdapter {
     let result = db.commissions;
     if (filter.statuses?.length) result = result.filter((c) => filter.statuses!.includes(c.status));
     if (filter.partnerId) result = result.filter((c) => c.partnerId === filter.partnerId);
+    return result;
+  }
+
+  // ─── Subscribers ────────────────────────────────────────────────────────
+
+  async createSubscriber(s: Subscriber): Promise<Subscriber> {
+    return this.mutate((db) => {
+      db.subscribers.unshift(s);
+      return s;
+    });
+  }
+
+  async updateSubscriber(id: string, patch: Partial<Subscriber>): Promise<Subscriber | null> {
+    return this.mutate((db) => {
+      const idx = db.subscribers.findIndex((s) => s.id === id);
+      if (idx === -1) return null;
+      const existing = db.subscribers[idx]!;
+      const updated: Subscriber = { ...existing, ...patch };
+      db.subscribers[idx] = updated;
+      return updated;
+    });
+  }
+
+  async getSubscriber(id: string): Promise<Subscriber | null> {
+    const db = await this.readDb();
+    return db.subscribers.find((s) => s.id === id) ?? null;
+  }
+
+  async findSubscriberByEmail(email: string): Promise<Subscriber | null> {
+    if (!email) return null;
+    const db = await this.readDb();
+    const e = email.toLowerCase().trim();
+    return db.subscribers.find((s) => s.email.toLowerCase() === e) ?? null;
+  }
+
+  async findSubscriberByConfirmToken(token: string): Promise<Subscriber | null> {
+    if (!token) return null;
+    const db = await this.readDb();
+    return db.subscribers.find((s) => s.confirmToken === token) ?? null;
+  }
+
+  async findSubscriberByUnsubscribeToken(token: string): Promise<Subscriber | null> {
+    if (!token) return null;
+    const db = await this.readDb();
+    return db.subscribers.find((s) => s.unsubscribeToken === token) ?? null;
+  }
+
+  async listSubscribers(filter: SubscriberFilter = {}): Promise<Subscriber[]> {
+    const db = await this.readDb();
+    let result = db.subscribers;
+    if (filter.statuses?.length) result = result.filter((s) => filter.statuses!.includes(s.status));
+    if (filter.search) {
+      const q = filter.search.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.email.toLowerCase().includes(q) ||
+          (s.firstName ?? '').toLowerCase().includes(q) ||
+          (s.postalCode ?? '').includes(q),
+      );
+    }
     return result;
   }
 }

@@ -13,14 +13,23 @@ function readReferralCookie(): string | undefined {
   return raw.toUpperCase();
 }
 
+export interface LeadSubmitResult {
+  /** Persoenlicher Empfehlungscode des soeben angelegten Leads. */
+  referralCode?: string;
+  /** ID des Leads (rein informativ; nicht sicherheitskritisch). */
+  id?: string;
+}
+
 /**
  * Übermittelt einen Landing-Lead an die API. Der Lead wird serverseitig
  * validiert, bewertet (Scoring) und im Storage gespeichert, sodass er im
  * Admin-Cockpit erscheint.
  *
  * Wenn ein Empfehlungscode im Cookie liegt, wird er automatisch mitgesendet.
+ * Rueckgabe enthaelt den frisch generierten eigenen Empfehlungscode des Leads,
+ * sodass die UI ihn unmittelbar fuer Sharing auf der Danke-Seite anzeigen kann.
  */
-export async function submitLandingLead(payload: LeadPayload): Promise<void> {
+export async function submitLandingLead(payload: LeadPayload): Promise<LeadSubmitResult> {
   const referredByCode = readReferralCookie();
   const fullPayload = referredByCode ? { ...payload, referredByCode } : payload;
 
@@ -39,5 +48,12 @@ export async function submitLandingLead(payload: LeadPayload): Promise<void> {
       // Antwort ohne JSON – Standardmeldung beibehalten.
     }
     throw new Error(message);
+  }
+
+  try {
+    const data = (await res.json()) as { id?: string; referralCode?: string };
+    return { id: data.id, referralCode: data.referralCode };
+  } catch {
+    return {};
   }
 }

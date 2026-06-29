@@ -71,3 +71,13 @@ CREATE TABLE IF NOT EXISTS commissions (
   seq  bigserial
 );
 CREATE INDEX IF NOT EXISTS commissions_partner_idx ON commissions ((data->>'partnerId'));
+
+CREATE TABLE IF NOT EXISTS subscribers (
+  id   text PRIMARY KEY,
+  data jsonb NOT NULL,
+  seq  bigserial
+);
+CREATE UNIQUE INDEX IF NOT EXISTS subscribers_email_uidx ON subscribers ((lower(data->>'email')));
+CREATE INDEX IF NOT EXISTS subscribers_confirm_idx ON subscribers ((data->>'confirmToken'));
+CREATE INDEX IF NOT EXISTS subscribers_unsub_idx ON subscribers ((data->>'unsubscribeToken'));
+CREATE INDEX IF NOT EXISTS subscribers_status_idx ON subscribers ((data->>'status'));

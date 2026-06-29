@@ -17,6 +17,8 @@ const LIMITS: Record<string, Limit> = {
   /** FAQ-Kontakt & ähnliche Formulare */
   contact: { capacity: 10, refillPerMinute: 6 },
   login: { capacity: 6, refillPerMinute: 3 },
+  /** Newsletter-Subscribe: streng, weil dies E-Mail-Trigger ausloest. */
+  newsletter: { capacity: 5, refillPerMinute: 3 },
 };
 
 export function rateLimit(key: string, kind: keyof typeof LIMITS = 'default'): { allowed: boolean; retryAfterSec: number } {

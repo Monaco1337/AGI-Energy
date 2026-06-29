@@ -31,6 +31,7 @@ const STATIC_ENTRIES: SitemapEntry[] = [
   { path: '/ratgeber', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/glossar', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/energieberatung', priority: 0.75, changeFrequency: 'weekly' },
+  { path: '/newsletter', priority: 0.55, changeFrequency: 'monthly' },
 
   // Rechtliche Pflicht-/Hilfsseiten
   { path: '/datenschutz', priority: 0.3, changeFrequency: 'yearly' },

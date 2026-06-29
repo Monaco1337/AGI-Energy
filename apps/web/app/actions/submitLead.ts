@@ -34,6 +34,8 @@ export interface SubmitResult {
   ok: boolean;
   error?: string;
   leadId?: string;
+  /** Persoenlicher Empfehlungscode des soeben angelegten Leads. */
+  referralCode?: string;
 }
 
 function asInterest(v: unknown): LeadFunnelInput['interests'] {
@@ -204,7 +206,7 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     }
   }
 
-  return { ok: true, leadId: id };
+  return { ok: true, leadId: id, referralCode: ownReferralCode };
 }
 
 // Re-export für sicheres Imports

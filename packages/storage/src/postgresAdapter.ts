@@ -16,6 +16,7 @@ import type {
   DealId,
   Commission,
   CommissionId,
+  Subscriber,
 } from '@elo/core';
 import type {
   StorageAdapter,
@@ -24,6 +25,7 @@ import type {
   TaskFilter,
   DealFilter,
   CommissionFilter,
+  SubscriberFilter,
 } from './types';
 
 /**
@@ -53,7 +55,8 @@ type Table =
   | 'partners'
   | 'tasks'
   | 'deals'
-  | 'commissions';
+  | 'commissions'
+  | 'subscribers';
 
 const ALL_TABLES: Table[] = [
   'users',
@@ -65,6 +68,7 @@ const ALL_TABLES: Table[] = [
   'tasks',
   'deals',
   'commissions',
+  'subscribers',
 ];
 
 let _pool: Pool | null = null;
@@ -114,6 +118,16 @@ export async function ensurePostgresSchema(): Promise<void> {
   await query(`CREATE INDEX IF NOT EXISTS deals_partner_idx ON deals ((data->>'partnerId'))`);
   await query(`CREATE INDEX IF NOT EXISTS deals_lead_idx ON deals ((data->>'leadId'))`);
   await query(`CREATE INDEX IF NOT EXISTS commissions_partner_idx ON commissions ((data->>'partnerId'))`);
+  await query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS subscribers_email_uidx ON subscribers ((lower(data->>'email')))`,
+  );
+  await query(
+    `CREATE INDEX IF NOT EXISTS subscribers_confirm_idx ON subscribers ((data->>'confirmToken'))`,
+  );
+  await query(
+    `CREATE INDEX IF NOT EXISTS subscribers_unsub_idx ON subscribers ((data->>'unsubscribeToken'))`,
+  );
+  await query(`CREATE INDEX IF NOT EXISTS subscribers_status_idx ON subscribers ((data->>'status'))`);
 }
 
 export class PostgresStorageAdapter implements StorageAdapter {
@@ -449,6 +463,63 @@ export class PostgresStorageAdapter implements StorageAdapter {
     let result = await this.all<Commission>('commissions');
     if (filter.statuses?.length) result = result.filter((c) => filter.statuses!.includes(c.status));
     if (filter.partnerId) result = result.filter((c) => c.partnerId === filter.partnerId);
+    return result;
+  }
+
+  // ─── Subscribers ────────────────────────────────────────────────────────
+
+  async createSubscriber(s: Subscriber): Promise<Subscriber> {
+    return this.insert('subscribers', s);
+  }
+
+  async updateSubscriber(id: string, patch: Partial<Subscriber>): Promise<Subscriber | null> {
+    return this.patch<Subscriber>('subscribers', id, patch, false);
+  }
+
+  async getSubscriber(id: string): Promise<Subscriber | null> {
+    return this.one<Subscriber>('subscribers', id);
+  }
+
+  async findSubscriberByEmail(email: string): Promise<Subscriber | null> {
+    if (!email) return null;
+    const e = email.toLowerCase().trim();
+    const { rows } = await query<{ data: Subscriber }>(
+      `SELECT data FROM subscribers WHERE lower(data->>'email') = $1 LIMIT 1`,
+      [e],
+    );
+    return rows[0]?.data ?? null;
+  }
+
+  async findSubscriberByConfirmToken(token: string): Promise<Subscriber | null> {
+    if (!token) return null;
+    const { rows } = await query<{ data: Subscriber }>(
+      `SELECT data FROM subscribers WHERE data->>'confirmToken' = $1 LIMIT 1`,
+      [token],
+    );
+    return rows[0]?.data ?? null;
+  }
+
+  async findSubscriberByUnsubscribeToken(token: string): Promise<Subscriber | null> {
+    if (!token) return null;
+    const { rows } = await query<{ data: Subscriber }>(
+      `SELECT data FROM subscribers WHERE data->>'unsubscribeToken' = $1 LIMIT 1`,
+      [token],
+    );
+    return rows[0]?.data ?? null;
+  }
+
+  async listSubscribers(filter: SubscriberFilter = {}): Promise<Subscriber[]> {
+    let result = await this.all<Subscriber>('subscribers');
+    if (filter.statuses?.length) result = result.filter((s) => filter.statuses!.includes(s.status));
+    if (filter.search) {
+      const q = filter.search.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.email.toLowerCase().includes(q) ||
+          (s.firstName ?? '').toLowerCase().includes(q) ||
+          (s.postalCode ?? '').includes(q),
+      );
+    }
     return result;
   }
 }

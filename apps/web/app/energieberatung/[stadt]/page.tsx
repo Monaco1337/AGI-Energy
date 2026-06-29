@@ -14,6 +14,7 @@ import {
   localBusinessSchema,
   serviceSchema,
 } from '@/lib/seoSchemas';
+import { pickArticlesForCity } from '@/lib/contentDiscovery';
 
 export function generateStaticParams() {
   return CITIES.map((c) => ({ stadt: c.slug }));
@@ -48,6 +49,7 @@ export default async function StadtPage(
 
   const path = `/energieberatung/${city.slug}`;
   const nearby = getNearbyCities(city, 6);
+  const cityArticles = pickArticlesForCity(3);
 
   const localFaqs = [
     {
@@ -221,6 +223,42 @@ export default async function StadtPage(
             </div>
           </div>
         </section>
+
+        {/* Passende Ratgeber */}
+        {cityArticles.length > 0 ? (
+          <section className="bg-softWhite border-t border-borderLight">
+            <div className="mx-auto max-w-5xl px-5 lg:px-8 py-14 sm:py-16">
+              <h2 className="font-display text-[20px] sm:text-[24px] font-semibold text-navy tracking-tight">
+                Vor der Beratung lesen: kompakte Ratgeber
+              </h2>
+              <p className="mt-3 max-w-2xl text-[14.5px] text-slate leading-relaxed">
+                Wenn Sie sich vorab orientieren wollen, finden Sie hier kurze,
+                herstellerunabhängige Erklärungen zu den wichtigsten Themen rund um
+                Strom, Gas und Vertragswechsel.
+              </p>
+              <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {cityArticles.map((a) => (
+                  <li key={a.slug}>
+                    <Link
+                      href={`/ratgeber/${a.slug}`}
+                      className="block h-full rounded-elo border border-borderLight bg-white p-5 hover:border-energyGreen/60 transition"
+                    >
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-energyGreen/90">
+                        {a.category} · {a.readingMinutes} Min
+                      </span>
+                      <span className="mt-2 block text-[15.5px] font-semibold text-navy leading-snug">
+                        {a.title}
+                      </span>
+                      <span className="mt-2 block text-[13.5px] text-slate leading-relaxed line-clamp-3">
+                        {a.description}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        ) : null}
 
         {/* Nachbarstaedte */}
         {nearby.length > 0 ? (

@@ -181,6 +181,12 @@ export function Footer() {
                 <ArrowIcon />
               </Link>
             </li>
+            <li>
+              <Link className={`${linkCls} group`} href="/newsletter">
+                Newsletter
+                <ArrowIcon />
+              </Link>
+            </li>
           </ul>
         </nav>
 

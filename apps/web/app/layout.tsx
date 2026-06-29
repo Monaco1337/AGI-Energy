@@ -48,6 +48,9 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   alternates: {
     canonical: '/',
+    types: {
+      'application/rss+xml': '/ratgeber/feed.xml',
+    },
   },
   openGraph: {
     type: 'website',
