@@ -157,6 +157,18 @@ export function Footer() {
                 <ArrowIcon />
               </Link>
             </li>
+            <li>
+              <Link className={`${linkCls} group`} href="/ratgeber">
+                Ratgeber
+                <ArrowIcon />
+              </Link>
+            </li>
+            <li>
+              <Link className={`${linkCls} group`} href="/fragen-antworten">
+                Fragen & Antworten
+                <ArrowIcon />
+              </Link>
+            </li>
           </ul>
         </nav>
 

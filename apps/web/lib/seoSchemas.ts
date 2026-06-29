@@ -11,6 +11,29 @@ const BRAND = 'AGI Energy';
 const TAGLINE = 'Persönliche Energieprüfung statt anonymer Tarifportale.';
 
 export function organizationSchema() {
+  const contactEmail = process.env.SALES_INBOX_EMAIL;
+  const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE;
+
+  const contactPoints: Record<string, unknown>[] = [];
+  if (contactEmail) {
+    contactPoints.push({
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      email: contactEmail,
+      availableLanguage: ['de'],
+      areaServed: 'DE',
+    });
+  }
+  if (contactPhone) {
+    contactPoints.push({
+      '@type': 'ContactPoint',
+      contactType: 'sales',
+      telephone: contactPhone,
+      availableLanguage: ['de'],
+      areaServed: 'DE',
+    });
+  }
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -22,6 +45,7 @@ export function organizationSchema() {
     description: TAGLINE,
     areaServed: { '@type': 'Country', name: 'Deutschland' },
     sameAs: [] as string[],
+    ...(contactPoints.length > 0 ? { contactPoint: contactPoints } : {}),
   };
 }
 
@@ -99,6 +123,40 @@ export function breadcrumbSchema(items: BreadcrumbItem[]) {
       name: it.name,
       item: `${SITE_URL}${it.path}`,
     })),
+  };
+}
+
+interface ArticleSchemaInput {
+  path: string;
+  title: string;
+  description: string;
+  datePublished: string;
+  dateModified?: string;
+  category?: string;
+}
+
+export function articleSchema({
+  path,
+  title,
+  description,
+  datePublished,
+  dateModified,
+  category,
+}: ArticleSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    '@id': `${SITE_URL}${path}#article`,
+    headline: title,
+    description,
+    datePublished,
+    dateModified: dateModified ?? datePublished,
+    inLanguage: 'de-DE',
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}${path}` },
+    author: { '@id': `${SITE_URL}/#organization` },
+    publisher: { '@id': `${SITE_URL}/#organization` },
+    image: `${SITE_URL}/icon-512`,
+    ...(category ? { articleSection: category } : {}),
   };
 }
 

@@ -1265,7 +1265,9 @@ Drop-Off pro Stufe als Prozent + absolut.
 - Lead-Mutations: `apps/web/app/actions/leadMutations.ts`
 - Bestehende Landingpages: `apps/web/app/{stromkosten-senken,gaskosten-senken,photovoltaik-beratung,gewerbe-energiecheck,energieberatung-deutschland,energiecheck}/page.tsx`
 - Neue Intent-Landingpages (No-Spend SEO): `apps/web/app/{jahresabrechnung-pruefen,stromvertrag-pruefen,gasvertrag-pruefen,anbieterwechsel-pruefen}/page.tsx`
-- SEO-Schemas (Organization, Service, FAQ, Breadcrumb): `apps/web/lib/seoSchemas.ts`
+- FAQ-Hub: `apps/web/app/fragen-antworten/page.tsx` + `apps/web/data/energyFaq.ts`
+- Ratgeber-System: `apps/web/app/ratgeber/page.tsx`, `apps/web/app/ratgeber/[slug]/page.tsx`, `apps/web/data/ratgeberArticles.ts`
+- SEO-Schemas (Organization, Service, FAQ, Article, Breadcrumb): `apps/web/lib/seoSchemas.ts`
 - Sitemap: `apps/web/app/sitemap.ts` (Site-URL haerter verankert auf agienergy.de)
 - Robots: `apps/web/app/robots.ts`
 - Consent-Modal: `apps/web/components/landing/ConsentBanner.tsx`
@@ -1302,10 +1304,12 @@ Realistischer Korridor ohne Werbebudget:
   - `/anbieterwechsel-pruefen` - Wechsel-Intent
 - **Bestehende Topic-LPs** mit Canonical + Service-Schema nachgeruestet (Strom, Gas, PV, Gewerbe, Energiecheck).
 - **301-Redirects** fuer Synonym-URLs (`/energiepruefung`, `/photovoltaik-pruefen`, `/gewerbeenergie-pruefen`) - vermeidet Duplicate-Content, buendelt Ranking-Signal.
-- **Globales Organization + WebSite JSON-LD** im Root-Layout - Voraussetzung fuer Sitelinks und Knowledge-Panel.
+- **Globales Organization + WebSite JSON-LD** im Root-Layout - inkl. dynamischer ContactPoint-Eintraege (greifen, sobald `SALES_INBOX_EMAIL` und `NEXT_PUBLIC_CONTACT_PHONE` gesetzt sind).
 - **OpenGraph + Twitter-Card-Defaults** - jeder Share wirkt sauber, ohne dass jemand etwas tun muss.
 - **Sitemap auf Default-URL `https://www.agienergy.de` haerter verankert** - Search-Console-Problem (vorher `localhost`) ist auch ohne Vercel-Env gefixt.
 - **Footer-Block "Schnellprüfung"** verlinkt die 4 neuen LPs sitewide - massiver Internal-Linking-Effekt.
+- **FAQ-Hub `/fragen-antworten`** - 6 Kategorien, ~25 Fragen, eigenes FAQ-Schema. Topic-Authority-Pilar, kandidiert fuer Sitelinks.
+- **Ratgeber-System `/ratgeber/[slug]`** - 3 substanzielle Long-Tail-Artikel mit Article-, Breadcrumb- und FAQ-Schema. Skaliert linear: jeder weitere Artikel wird automatisch in Index + Sitemap aufgenommen.
 
 ### B3. Was der Inhaber/Betreiber manuell tun muss (kein Code, je 30-60 Min)
 

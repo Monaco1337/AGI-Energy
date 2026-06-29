@@ -23,6 +23,10 @@ const HERO_FULLBLEED_PATHS = new Set([
   '/photovoltaik-beratung',
   '/gewerbe-energiecheck',
   '/energieberatung-deutschland',
+  '/jahresabrechnung-pruefen',
+  '/stromvertrag-pruefen',
+  '/gasvertrag-pruefen',
+  '/anbieterwechsel-pruefen',
 ]);
 
 export function Header() {
