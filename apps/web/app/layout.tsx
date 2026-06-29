@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Manrope } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { ConsentBanner } from '@/components/landing/ConsentBanner';
+import UtmCookieSetter from '@/components/landing/UtmCookieSetter';
 import {
   jsonLdScriptProps,
   organizationSchema,
@@ -92,6 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script {...jsonLdScriptProps(webSiteSchema())} />
       </head>
       <body className="min-h-screen bg-softWhite text-navy antialiased font-sans">
+        <UtmCookieSetter />
         {children}
         <ConsentBanner />
       </body>

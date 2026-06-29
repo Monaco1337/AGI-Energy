@@ -94,6 +94,23 @@ export default async function PerformancePage() {
   const partnerId = await getCurrentPartnerId(session);
   const focus = isAdminRole(session.role) ? null : stats.find((s) => s.id === partnerId) ?? null;
 
+  // Akquise-Quellen-Statistik (Admin-only): zaehlt Leads pro utm_source.
+  // Erkennt 'website'/'referral' (intern) und liefert reine Akquise-Verteilung.
+  type SourceStat = { source: string; total: number; closed: number; lost: number; new7d: number };
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const acquisitionMap = new Map<string, SourceStat>();
+  for (const l of leads) {
+    const key = (l.utmSource ?? l.source ?? 'unknown').toString().toLowerCase().slice(0, 40);
+    const cur =
+      acquisitionMap.get(key) ?? { source: key, total: 0, closed: 0, lost: 0, new7d: 0 };
+    cur.total += 1;
+    if (l.status === 'Abgeschlossen') cur.closed += 1;
+    if (l.status === 'Verloren') cur.lost += 1;
+    if (new Date(l.createdAt).getTime() >= sevenDaysAgo) cur.new7d += 1;
+    acquisitionMap.set(key, cur);
+  }
+  const acquisitionSources = [...acquisitionMap.values()].sort((a, b) => b.total - a.total).slice(0, 12);
+
   const topByConv = [...stats].sort((a, b) => b.conversionRate - a.conversionRate).slice(0, 5);
   const topByClose = [...stats].sort((a, b) => b.closedThisMonth - a.closedThisMonth).slice(0, 5);
   const fastest = [...stats]
@@ -123,6 +140,62 @@ export default async function PerformancePage() {
           <Stat label="Abschlüsse Mt." value={String(focus.closedThisMonth)} tone="success" />
           <Stat label="Reaktionszeit" value={fmtReaction(focus.avgReactionMs)} />
           <Stat label="Offene Provision" value={fmtEur(focus.pendingCommission)} tone="gold" />
+        </section>
+      )}
+
+      {!focus && isAdminRole(session.role) && acquisitionSources.length > 0 && (
+        <section className="ops-card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-[16px] text-[var(--ops-text)]">Akquise-Quellen</h2>
+            <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">
+              First-Touch
+            </span>
+          </div>
+          <p className="mt-1 text-[12.5px] text-[var(--ops-muted)] max-w-2xl">
+            Woher Leads tatsächlich kamen. Tracking aus dem UTM-Cookie der Landing-Seite.
+            Tipp: nutze Distributions-Links mit{' '}
+            <code className="font-mono">?utm_source=linkedin</code>,{' '}
+            <code className="font-mono">?utm_source=gmb</code> usw.
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-[13.5px]">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">
+                  <th className="py-2 pr-4 font-medium">Quelle</th>
+                  <th className="py-2 pr-4 font-medium text-right tabular-nums">Leads gesamt</th>
+                  <th className="py-2 pr-4 font-medium text-right tabular-nums">Letzte 7 Tage</th>
+                  <th className="py-2 pr-4 font-medium text-right tabular-nums">Abgeschl.</th>
+                  <th className="py-2 pr-4 font-medium text-right tabular-nums">Verloren</th>
+                  <th className="py-2 font-medium text-right tabular-nums">Conv.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {acquisitionSources.map((s) => {
+                  const conv = s.total > 0 ? s.closed / s.total : 0;
+                  return (
+                    <tr key={s.source} className="border-t border-[var(--ops-border)]">
+                      <td className="py-2 pr-4 text-[var(--ops-text)] font-mono">{s.source}</td>
+                      <td className="py-2 pr-4 text-right tabular-nums text-[var(--ops-text)]">
+                        {s.total}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums text-[var(--ops-cyan)]">
+                        {s.new7d}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums text-[var(--ops-success)]">
+                        {s.closed}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums text-[var(--ops-muted)]">
+                        {s.lost}
+                      </td>
+                      <td className="py-2 text-right tabular-nums font-display font-semibold text-[var(--ops-text)]">
+                        {Math.round(conv * 100)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

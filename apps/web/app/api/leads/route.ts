@@ -35,6 +35,11 @@ const schema = z.object({
   company: z.string().max(0).optional(),
   /** Optional: Empfehlungscode (aus Cookie oder Direkt-Link). */
   referredByCode: z.string().min(4).max(16).optional(),
+  /** Optional: First-Touch-UTM-/Referrer-Daten aus Cookie. */
+  utmSource: z.string().max(60).optional(),
+  utmMedium: z.string().max(60).optional(),
+  utmCampaign: z.string().max(60).optional(),
+  referrer: z.string().max(200).optional(),
 });
 
 const CATEGORY_MAP: Record<
@@ -57,6 +62,16 @@ function parseZip(raw: string): { postalCode: string; city?: string } {
   const m = raw.trim().match(/(\d{4,5})\s*(.*)$/);
   if (m) return { postalCode: m[1]!, city: m[2]?.trim() || undefined };
   return { postalCode: raw.trim() };
+}
+
+function buildSourceDetails(base: string, referrer?: string): string {
+  if (!referrer) return base;
+  try {
+    const u = new URL(referrer);
+    return `${base} | ref:${u.hostname}`;
+  } catch {
+    return `${base} | ref:${referrer.slice(0, 60)}`;
+  }
 }
 
 export async function POST(req: Request) {
@@ -135,10 +150,13 @@ export async function POST(req: Request) {
     createdAt: now,
     updatedAt: now,
     source: referredByLeadId ? 'referral' : 'website',
-    sourceDetails: d.source ?? 'landingpage-hero',
+    sourceDetails: buildSourceDetails(d.source ?? 'landingpage-hero', d.referrer),
     referralCode: ownReferralCode,
     ...(d.referredByCode ? { referredByCode: d.referredByCode.toUpperCase() } : {}),
     ...(referredByLeadId ? { referredByLeadId } : {}),
+    ...(d.utmSource ? { utmSource: d.utmSource } : {}),
+    ...(d.utmMedium ? { utmMedium: d.utmMedium } : {}),
+    ...(d.utmCampaign ? { utmCampaign: d.utmCampaign } : {}),
 
     customerType: map.customerType,
     interests: map.interests,

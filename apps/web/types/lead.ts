@@ -22,6 +22,11 @@ export interface LeadPayload {
   createdAt: string;
   /** Optional: Empfehlungscode (clientseitig aus Cookie nachgereicht). */
   referredByCode?: string;
+  /** Optional: UTM/Referrer aus Cookie (First-Touch). */
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  referrer?: string;
 }
 
 export interface LeadFormErrors {

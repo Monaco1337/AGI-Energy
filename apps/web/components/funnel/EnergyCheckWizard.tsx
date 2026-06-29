@@ -21,6 +21,26 @@ import type { AnswerState, FunnelStep, Interest } from '@elo/core';
 
 const STORAGE_KEY = 'elo_funnel_state_v1';
 
+function readCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  if (!m) return undefined;
+  try {
+    return decodeURIComponent(m[1]!);
+  } catch {
+    return undefined;
+  }
+}
+
+function readUtmCookies() {
+  return {
+    utmSource: readCookie('agi_utm_source'),
+    utmMedium: readCookie('agi_utm_medium'),
+    utmCampaign: readCookie('agi_utm_campaign'),
+    referrer: readCookie('agi_referrer'),
+  };
+}
+
 function isFilled(s: AnswerState, step: FunnelStep): boolean {
   if (step.type === 'contact') {
     return Boolean(s.firstName && s.lastName && s.postalCode && (s.phone || s.email));
@@ -106,6 +126,7 @@ export function EnergyCheckWizard() {
   function handleSubmit() {
     if (!canNext) return;
     const elapsed = Date.now() - startedAt.current;
+    const utm = readUtmCookies();
     const fd = new FormData();
     fd.set(
       'payload',
@@ -113,6 +134,10 @@ export function EnergyCheckWizard() {
         state,
         consentTextVersion: CONSENT_VERSION,
         submittedAtMs: elapsed,
+        ...(utm.utmSource ? { utmSource: utm.utmSource } : {}),
+        ...(utm.utmMedium ? { utmMedium: utm.utmMedium } : {}),
+        ...(utm.utmCampaign ? { utmCampaign: utm.utmCampaign } : {}),
+        ...(utm.referrer ? { referrer: utm.referrer } : {}),
       }),
     );
     startTransition(async () => {

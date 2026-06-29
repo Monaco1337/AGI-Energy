@@ -39,6 +39,15 @@ const inputCls =
 
 const CAT_LABEL = { strom: 'Strom', gas: 'Gas', solar: 'Photovoltaik', gewerbe: 'Gewerbe' } as const;
 
+function SourceField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[11.5px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">{label}</dt>
+      <dd className="mt-1 text-[14px] text-[var(--ops-text)] break-all">{value}</dd>
+    </div>
+  );
+}
+
 interface Props {
   lead: Lead;
   /** Partner-Liste für die Zuweisung (Admin-Sicht). */
@@ -251,6 +260,28 @@ export function LeadDrawer({
                   </p>
                 </div>
               ) : null}
+            </section>
+          )}
+
+          {(lead.utmSource || lead.utmMedium || lead.utmCampaign || lead.sourceDetails) && (
+            <section className="ops-card p-5">
+              <h3 className="font-display text-[16px] text-[var(--ops-text)]">Akquise-Quelle</h3>
+              <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                <SourceField label="Quelle" value={lead.source} />
+                {lead.utmSource ? <SourceField label="utm_source" value={lead.utmSource} /> : null}
+                {lead.utmMedium ? <SourceField label="utm_medium" value={lead.utmMedium} /> : null}
+                {lead.utmCampaign ? <SourceField label="utm_campaign" value={lead.utmCampaign} /> : null}
+                {lead.sourceDetails ? (
+                  <div className="sm:col-span-2">
+                    <dt className="text-[11.5px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">
+                      Details
+                    </dt>
+                    <dd className="mt-1 text-[13px] text-[var(--ops-text)] break-all">
+                      {lead.sourceDetails}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
             </section>
           )}
 

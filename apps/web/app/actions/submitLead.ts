@@ -28,6 +28,11 @@ const payloadSchema = z.object({
   submittedAtMs: z.number().int().nonnegative(),
   /** Optional: Empfehlungscode des werbenden Leads (aus /empfehlung/[code]). */
   referredByCode: z.string().min(4).max(16).optional(),
+  /** First-Touch-UTM-Daten aus Client-Cookie (siehe UtmCookieSetter). */
+  utmSource: z.string().max(60).optional(),
+  utmMedium: z.string().max(60).optional(),
+  utmCampaign: z.string().max(60).optional(),
+  referrer: z.string().max(200).optional(),
 });
 
 export interface SubmitResult {
@@ -47,6 +52,14 @@ function asInterest(v: unknown): LeadFunnelInput['interests'] {
 
 function asEnum<T extends string>(v: unknown, fallback: T, allowed: readonly T[]): T {
   return typeof v === 'string' && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
+}
+
+function tryHostname(raw: string): string {
+  try {
+    return new URL(raw).hostname;
+  } catch {
+    return raw.slice(0, 60);
+  }
 }
 
 export async function submitLead(formData: FormData): Promise<SubmitResult> {
@@ -140,14 +153,22 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     if (referrer) referredByLeadId = referrer.id;
   }
 
+  const sourceDetails = payload.referrer
+    ? `website_funnel | ref:${tryHostname(payload.referrer)}`
+    : undefined;
+
   const lead: Lead = {
     id,
     createdAt: now,
     updatedAt: now,
     source: referredByLeadId ? 'referral' : input.source,
+    ...(sourceDetails ? { sourceDetails } : {}),
     referralCode: ownReferralCode,
     ...(payload.referredByCode ? { referredByCode: payload.referredByCode.toUpperCase() } : {}),
     ...(referredByLeadId ? { referredByLeadId } : {}),
+    ...(payload.utmSource ? { utmSource: payload.utmSource } : {}),
+    ...(payload.utmMedium ? { utmMedium: payload.utmMedium } : {}),
+    ...(payload.utmCampaign ? { utmCampaign: payload.utmCampaign } : {}),
     customerType: input.customerType,
     interests: input.interests,
     urgency: input.urgency,
