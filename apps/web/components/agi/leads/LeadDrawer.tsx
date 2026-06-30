@@ -1,4 +1,15 @@
-import type { Lead, LeadStatus, Partner } from '@elo/core';
+import type {
+  CustomerType,
+  HasInvoice,
+  Interest,
+  Lead,
+  LeadFile,
+  LeadStatus,
+  MonthlyEnergyCosts,
+  OwnsProperty,
+  Partner,
+  Urgency,
+} from '@elo/core';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadScoreBadge } from './LeadScoreBadge';
 import { LeadQuickActions } from './LeadQuickActions';
@@ -39,6 +50,73 @@ const inputCls =
 
 const CAT_LABEL = { strom: 'Strom', gas: 'Gas', solar: 'Photovoltaik', gewerbe: 'Gewerbe' } as const;
 
+const INTEREST_LABEL: Record<Interest, string> = {
+  strom: 'Strom',
+  gas: 'Gas',
+  photovoltaik: 'Photovoltaik',
+  strom_gas: 'Strom + Gas',
+  unknown: 'Noch offen',
+};
+
+const URGENCY_LABEL: Record<Urgency, string> = {
+  immediate: 'Sofort',
+  weeks: 'In den nächsten Wochen',
+  information: 'Möchte sich erst informieren',
+  unknown: '—',
+};
+
+const HAS_INVOICE_LABEL: Record<HasInvoice, string> = {
+  upload_now: 'Rechnung hochgeladen',
+  later: 'Reicht Rechnung nach',
+  no: 'Keine Rechnung vorhanden',
+  unknown: '—',
+};
+
+const COSTS_LABEL: Record<MonthlyEnergyCosts, string> = {
+  under_100: 'unter 100 € / Monat',
+  '100_200': '100–200 € / Monat',
+  '200_400': '200–400 € / Monat',
+  over_400: 'über 400 € / Monat',
+  unknown: '—',
+};
+
+const CUSTOMER_TYPE_LABEL: Record<CustomerType, string> = {
+  private: 'Privatkunde',
+  home_owner: 'Eigenheimbesitzer',
+  business: 'Gewerbe',
+  landlord: 'Vermieter',
+  unknown: '—',
+};
+
+const OWNS_PROPERTY_LABEL: Record<OwnsProperty, string> = {
+  yes: 'Eigentum',
+  no: 'Miete',
+  business_property: 'Gewerbeimmobilie',
+  rental_property: 'Mietobjekt',
+  unknown: '—',
+};
+
+const FILE_CAT_LABEL: Record<LeadFile['category'], string> = {
+  invoice: 'Rechnung',
+  offer: 'Angebot',
+  contract: 'Vertrag',
+  other: 'Sonstiges',
+};
+
+function fileExtLabel(f: LeadFile): string {
+  const t = (f.fileType ?? '').toLowerCase();
+  if (t === 'application/pdf') return 'PDF';
+  if (t.startsWith('image/')) return t.replace('image/', '').toUpperCase().slice(0, 4);
+  const ext = f.fileName.includes('.') ? f.fileName.split('.').pop() : undefined;
+  return (ext ?? 'Datei').toUpperCase().slice(0, 4);
+}
+
+function fileHref(f: LeadFile): string | undefined {
+  return f.fileUrl && f.fileUrl.startsWith('leads/')
+    ? `/api/admin/file?path=${encodeURIComponent(f.fileUrl)}`
+    : undefined;
+}
+
 function SourceField({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -76,6 +154,11 @@ export function LeadDrawer({
 }: Props) {
   const ret = redirectTo ?? `/admin/leads/${lead.id}`;
   const cat = leadCategory(lead);
+  const invoiceFile = lead.files.find((f) => f.category === 'invoice');
+  const hasUpload = lead.files.some((f) => fileHref(f));
+  const interestLabels = lead.interests
+    .map((i) => INTEREST_LABEL[i] ?? i)
+    .filter((v) => v && v !== 'Noch offen');
 
   return (
     <div className="space-y-5">
@@ -108,6 +191,16 @@ export function LeadDrawer({
                   </span>
                 )}
                 <span className="ops-pill">Eingang: {fmtDateTime(lead.createdAt)}</span>
+                {hasUpload && (
+                  <a
+                    href="#unterlagen"
+                    className="ops-pill"
+                    data-tone="gold"
+                    title="Der Kunde hat Unterlagen hochgeladen"
+                  >
+                    {invoiceFile ? 'Rechnung hochgeladen' : 'Unterlagen vorhanden'}
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -171,24 +264,71 @@ export function LeadDrawer({
           </section>
 
           <section className="ops-card p-5">
-            <h3 className="font-display text-[16px] text-[var(--ops-text)]">Profil</h3>
-            <dl className="mt-3 grid grid-cols-3 gap-y-2 text-[13px]">
-              <dt className="text-[var(--ops-text-2)]">Typ</dt>
-              <dd className="col-span-2 capitalize">{lead.customerType.replace('_', ' ')}</dd>
-              <dt className="text-[var(--ops-text-2)]">Interesse</dt>
-              <dd className="col-span-2">{lead.interests.join(', ')}</dd>
-              <dt className="text-[var(--ops-text-2)]">Dringlichkeit</dt>
-              <dd className="col-span-2">{lead.urgency}</dd>
-              <dt className="text-[var(--ops-text-2)]">Kosten/Monat</dt>
-              <dd className="col-span-2">{lead.monthlyEnergyCosts}</dd>
+            <h3 className="font-display text-[16px] text-[var(--ops-text)]">Anliegen des Kunden</h3>
+
+            <div className="mt-3">
+              <div className="text-[11.5px] uppercase tracking-[0.14em] text-[var(--ops-muted)]">
+                Interesse
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {interestLabels.length > 0 ? (
+                  interestLabels.map((label) => (
+                    <span key={label} className="ops-pill" data-tone="blue">
+                      {label}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[13px] text-[var(--ops-muted)]">Noch offen</span>
+                )}
+              </div>
+            </div>
+
+            <dl className="mt-4 grid grid-cols-3 gap-y-2.5 text-[13px] border-t border-[var(--ops-border)] pt-4">
+              <dt className="text-[var(--ops-text-2)]">Energiekosten</dt>
+              <dd className="col-span-2 text-[var(--ops-text)]">
+                {COSTS_LABEL[lead.monthlyEnergyCosts]}
+              </dd>
+
+              <dt className="text-[var(--ops-text-2)]">Rechnung</dt>
+              <dd className="col-span-2 text-[var(--ops-text)]">
+                {HAS_INVOICE_LABEL[lead.hasInvoice]}
+              </dd>
+
+              {lead.customerType !== 'unknown' && (
+                <>
+                  <dt className="text-[var(--ops-text-2)]">Kundentyp</dt>
+                  <dd className="col-span-2 text-[var(--ops-text)]">
+                    {CUSTOMER_TYPE_LABEL[lead.customerType]}
+                  </dd>
+                </>
+              )}
+
+              {lead.urgency !== 'unknown' && (
+                <>
+                  <dt className="text-[var(--ops-text-2)]">Dringlichkeit</dt>
+                  <dd className="col-span-2 text-[var(--ops-text)]">
+                    {URGENCY_LABEL[lead.urgency]}
+                  </dd>
+                </>
+              )}
+
+              {lead.ownsProperty !== 'unknown' && (
+                <>
+                  <dt className="text-[var(--ops-text-2)]">Wohnsituation</dt>
+                  <dd className="col-span-2 text-[var(--ops-text)]">
+                    {OWNS_PROPERTY_LABEL[lead.ownsProperty]}
+                  </dd>
+                </>
+              )}
+
               {lead.annualConsumptionKwh != null && (
                 <>
                   <dt className="text-[var(--ops-text-2)]">Jahresverbrauch</dt>
-                  <dd className="col-span-2">{lead.annualConsumptionKwh.toLocaleString('de-DE')} kWh</dd>
+                  <dd className="col-span-2 text-[var(--ops-text)]">
+                    {lead.annualConsumptionKwh.toLocaleString('de-DE')} kWh
+                  </dd>
                 </>
               )}
-              <dt className="text-[var(--ops-text-2)]">Rechnung</dt>
-              <dd className="col-span-2">{lead.hasInvoice}</dd>
             </dl>
           </section>
 
@@ -503,31 +643,76 @@ export function LeadDrawer({
           </section>
 
           {lead.files.length > 0 && (
-            <section className="ops-card p-5">
-              <h3 className="font-display text-[16px] text-[var(--ops-text)]">Unterlagen</h3>
-              <ul className="mt-3 space-y-2 text-[13px]">
+            <section
+              id="unterlagen"
+              className="ops-card p-5 scroll-mt-24 border-[rgba(212,175,55,0.35)]"
+            >
+              <h3 className="font-display text-[16px] text-[var(--ops-text)]">
+                Hochgeladene Unterlagen
+              </h3>
+              <p className="mt-1 text-[12px] text-[var(--ops-muted)]">
+                Vom Kunden im Energie-Check übermittelt.
+              </p>
+              <ul className="mt-4 space-y-3">
                 {lead.files.map((f) => {
-                  const downloadable = f.fileUrl && f.fileUrl.startsWith('leads/');
+                  const href = fileHref(f);
+                  const isImage = (f.fileType ?? '').toLowerCase().startsWith('image/');
                   return (
-                    <li key={f.id} className="flex items-center gap-2 text-[var(--ops-text-2)]">
-                      <span aria-hidden className="size-1.5 rounded-full bg-[var(--ops-cyan)]" />
-                      {downloadable ? (
-                        <a
-                          href={`/api/admin/file?path=${encodeURIComponent(f.fileUrl)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex-1 truncate underline underline-offset-2 hover:text-[var(--ops-cyan)]"
-                        >
-                          {f.fileName}
+                    <li
+                      key={f.id}
+                      className="overflow-hidden rounded-xl border border-[var(--ops-border)] bg-white/[0.03]"
+                    >
+                      {href && isImage && (
+                        <a href={href} target="_blank" rel="noreferrer" className="block">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={href}
+                            alt={`Vorschau: ${f.fileName}`}
+                            loading="lazy"
+                            className="max-h-56 w-full bg-black/30 object-contain"
+                          />
                         </a>
-                      ) : (
-                        <span className="flex-1 truncate">{f.fileName}</span>
                       )}
-                      <span className="ops-pill">{f.category}</span>
+                      <div className="flex items-center gap-3 p-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(54,230,208,0.12)] text-[10.5px] font-semibold uppercase tracking-wide text-[var(--ops-cyan)]">
+                          {fileExtLabel(f)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13.5px] text-[var(--ops-text)]">
+                            {f.fileName}
+                          </div>
+                          <div className="text-[11.5px] text-[var(--ops-muted)]">
+                            {FILE_CAT_LABEL[f.category]} · {fmtDateTime(f.createdAt)}
+                          </div>
+                        </div>
+                        {href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ops-cta-ghost h-8 whitespace-nowrap rounded-lg px-3 text-[12.5px]"
+                          >
+                            Öffnen
+                          </a>
+                        ) : (
+                          <span className="text-[11.5px] text-[var(--ops-muted)]">
+                            wird nachgereicht
+                          </span>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
               </ul>
+            </section>
+          )}
+
+          {lead.files.length === 0 && lead.hasInvoice === 'later' && (
+            <section className="ops-card p-5">
+              <h3 className="font-display text-[16px] text-[var(--ops-text)]">Unterlagen</h3>
+              <p className="mt-2 text-[13px] text-[var(--ops-text-2)]">
+                Der Kunde möchte seine Rechnung nachreichen. Beim Erstkontakt aktiv danach fragen.
+              </p>
             </section>
           )}
         </aside>

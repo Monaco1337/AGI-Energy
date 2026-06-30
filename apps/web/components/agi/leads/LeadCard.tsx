@@ -41,6 +41,7 @@ export function LeadCard({
   const fullName = `${lead.firstName} ${lead.lastName}`.trim() || 'Unbekannt';
   const location = [lead.postalCode, lead.city].filter(Boolean).join(' ');
   const target = href ?? `/admin/leads/${lead.id}`;
+  const hasUpload = lead.files?.some((f) => f.fileUrl?.startsWith('leads/'));
 
   return (
     <article
@@ -72,6 +73,11 @@ export function LeadCard({
             </div>
             <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
               <LeadStatusBadge status={lead.status} />
+              {hasUpload && (
+                <span className="ops-pill" data-tone="gold" title="Unterlagen hochgeladen">
+                  Rechnung
+                </span>
+              )}
               {partner && (
                 <span className="ops-pill" data-tone="blue" title="Zugewiesener Partner">
                   {partner.name}
