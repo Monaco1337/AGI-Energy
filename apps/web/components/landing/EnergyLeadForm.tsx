@@ -8,6 +8,7 @@ import { energyLandingContent } from '@/data/energyLandingContent';
 import { validateLeadForm, toLeadPayload } from '@/lib/leadValidation';
 import { submitLandingLead } from '@/lib/leadSubmit';
 import { ENERGY_LEAD_FORM_ID } from '@/lib/scrollToEnergyForm';
+import { CONSENT_TEXTS } from '@/lib/consent';
 import type { LeadCategory, LeadFormErrors, SubmitStatus } from '@/types/lead';
 import { CategorySelector } from './CategorySelector';
 import { UploadDropzone } from './UploadDropzone';
@@ -47,6 +48,7 @@ export function EnergyLeadForm({
   const [annualConsumptionKwh, setAnnualConsumptionKwh] = React.useState('');
   const [file, setFile] = React.useState<File | null>(null);
   const [consent, setConsent] = React.useState(false);
+  const [whatsappConsent, setWhatsappConsent] = React.useState(false);
   const [status, setStatus] = React.useState<SubmitStatus>('idle');
   const [errors, setErrors] = React.useState<LeadFormErrors>({});
 
@@ -76,6 +78,7 @@ export function EnergyLeadForm({
     setAnnualConsumptionKwh('');
     setFile(null);
     setConsent(false);
+    setWhatsappConsent(false);
     setErrors({});
     setStatus('idle');
   };
@@ -83,7 +86,17 @@ export function EnergyLeadForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus('validating');
-    const input = { category, name, phone, email, zip, annualConsumptionKwh, file, consent };
+    const input = {
+      category,
+      name,
+      phone,
+      email,
+      zip,
+      annualConsumptionKwh,
+      file,
+      consent,
+      whatsappConsent,
+    };
     const next = validateLeadForm(input);
     setErrors(next);
     if (Object.keys(next).length > 0) {
@@ -245,15 +258,18 @@ export function EnergyLeadForm({
               disabled={locked}
               label={
                 <>
-                  Ich stimme der vertraulichen Verarbeitung meiner Anfrage durch AGI Energy zu. Hinweise zur
-                  Datenverarbeitung finden Sie in der{' '}
+                  Ich habe die{' '}
                   <Link
                     href="/datenschutz"
                     className="text-cyanDeep underline underline-offset-2 font-medium hover:text-cyan transition-colors"
                   >
                     Datenschutzerklärung
                   </Link>
-                  .
+                  {' '}
+                  gelesen und bin damit einverstanden, dass meine Angaben zur
+                  Bearbeitung meiner Anfrage zur persönlichen Energieprüfung
+                  verarbeitet werden. Mir ist bekannt, dass ich zur Bearbeitung
+                  meiner Anfrage per Telefon oder E-Mail kontaktiert werden kann.
                 </>
               }
             />
@@ -262,13 +278,32 @@ export function EnergyLeadForm({
                 {errors.consent}
               </p>
             )}
+            <div className="mt-4">
+              <Checkbox
+                checked={whatsappConsent}
+                onChange={(e) => setWhatsappConsent(e.target.checked)}
+                disabled={locked}
+                label={CONSENT_TEXTS.whatsapp}
+              />
+            </div>
           </div>
 
           <Button type="submit" variant="primary" size="lg" fullWidth disabled={locked} className="h-[54px] text-[14.5px]">
-            {busy ? c.submitting : c.submit}
+            {busy ? c.submitting : 'Kostenlose Energieprüfung anfragen'}
           </Button>
 
-          <p className="mt-2.5 text-center text-[11.5px] text-slate leading-[1.45]">{c.submitFootnote}</p>
+          <p className="mt-2.5 text-center text-[11.5px] text-slate leading-[1.45]">
+            Mit dem Absenden der Anfrage werden Ihre Angaben zur Bearbeitung Ihrer
+            Energieprüfungsanfrage verarbeitet. Weitere Informationen finden Sie in
+            unserer{' '}
+            <Link
+              href="/datenschutz"
+              className="text-cyanDeep underline underline-offset-2 font-medium hover:text-cyan transition-colors"
+            >
+              Datenschutzerklärung
+            </Link>
+            .
+          </p>
         </form>
       )}
     </GlassCard>

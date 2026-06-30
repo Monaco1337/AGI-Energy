@@ -24,12 +24,16 @@ function readUtmCookies(): {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   referrer?: string;
 } {
   return {
     utmSource: readCookie('agi_utm_source'),
     utmMedium: readCookie('agi_utm_medium'),
     utmCampaign: readCookie('agi_utm_campaign'),
+    utmTerm: readCookie('agi_utm_term'),
+    utmContent: readCookie('agi_utm_content'),
     referrer: readCookie('agi_referrer'),
   };
 }
@@ -59,6 +63,8 @@ export async function submitLandingLead(payload: LeadPayload): Promise<LeadSubmi
     ...(utm.utmSource ? { utmSource: utm.utmSource } : {}),
     ...(utm.utmMedium ? { utmMedium: utm.utmMedium } : {}),
     ...(utm.utmCampaign ? { utmCampaign: utm.utmCampaign } : {}),
+    ...(utm.utmTerm ? { utmTerm: utm.utmTerm } : {}),
+    ...(utm.utmContent ? { utmContent: utm.utmContent } : {}),
     ...(utm.referrer ? { referrer: utm.referrer } : {}),
   };
 

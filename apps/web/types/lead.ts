@@ -18,6 +18,15 @@ export interface LeadPayload {
   fileType?: string;
   fileSize?: number;
   consent: boolean;
+  whatsappConsent?: boolean;
+  partnerForwardingConsent?: boolean;
+  consentVersion?: string;
+  privacyPolicyVersion?: string;
+  consentTextPrivacy?: string;
+  consentTextWhatsapp?: string;
+  consentTextPartnerForwarding?: string;
+  pagePath?: string;
+  technicalRequestId?: string;
   source: 'landingpage-hero';
   createdAt: string;
   /** Optional: Empfehlungscode (clientseitig aus Cookie nachgereicht). */
@@ -26,6 +35,8 @@ export interface LeadPayload {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   referrer?: string;
 }
 

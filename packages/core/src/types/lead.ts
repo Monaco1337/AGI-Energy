@@ -80,6 +80,26 @@ export interface ConsentRecord {
   consentTextVersion: string;
   consentTimestamp: string;
   source: string;
+  consentPrivacyAccepted?: boolean;
+  consentWhatsappAccepted?: boolean;
+  consentPartnerForwardingAccepted?: boolean;
+  consentTextPrivacy?: string;
+  consentTextWhatsapp?: string;
+  consentTextPartnerForwarding?: string;
+  consentVersion?: string;
+  privacyPolicyVersion?: string;
+  timestamp?: string;
+  formSource?: string;
+  pagePath?: string;
+  referrer?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
+  technicalRequestId?: string;
+  ipHash?: string;
+  userAgent?: string;
 }
 
 export interface ScoreReason {
@@ -139,6 +159,8 @@ export interface Lead {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
 
   /**
    * Persoenlicher Empfehlungscode dieses Leads (eigener Code).
@@ -213,6 +235,8 @@ export interface LeadFunnelInput {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   campaignId?: string;
 
   customerType: CustomerType;

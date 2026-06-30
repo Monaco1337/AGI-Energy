@@ -4,16 +4,21 @@ import {
   newId,
   newReferralCode,
   nowIso,
+  CONSENT_TEXT,
   CONSENT_TEXT_VERSION,
+  PRIVACY_POLICY_VERSION,
+  hashIp,
   type Lead,
   type LeadId,
   type Interest,
   type CustomerType,
   type OwnsProperty,
+  type ContactPreference,
 } from '@elo/core';
 import { getStorage } from '@elo/storage';
 import { scoreLead } from '@elo/scoring';
 import { rateLimit, getClientKeyFromHeaders } from '@/lib/rateLimit';
+import { env } from '@/lib/env';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +34,15 @@ const schema = z.object({
   fileType: z.string().max(120).optional(),
   fileSize: z.number().nonnegative().optional(),
   consent: z.boolean().refine((v) => v === true, { message: 'Einwilligung erforderlich.' }),
+  whatsappConsent: z.boolean().optional(),
+  partnerForwardingConsent: z.boolean().optional(),
+  consentVersion: z.string().max(120).optional(),
+  privacyPolicyVersion: z.string().max(120).optional(),
+  consentTextPrivacy: z.string().max(1000).optional(),
+  consentTextWhatsapp: z.string().max(1000).optional(),
+  consentTextPartnerForwarding: z.string().max(1000).optional(),
+  pagePath: z.string().max(240).optional(),
+  technicalRequestId: z.string().max(120).optional(),
   source: z.string().max(60).optional(),
   createdAt: z.string().max(40).optional(),
   /** Honeypot – muss leer bleiben */
@@ -39,6 +53,8 @@ const schema = z.object({
   utmSource: z.string().max(60).optional(),
   utmMedium: z.string().max(60).optional(),
   utmCampaign: z.string().max(60).optional(),
+  utmTerm: z.string().max(60).optional(),
+  utmContent: z.string().max(60).optional(),
   referrer: z.string().max(200).optional(),
 });
 
@@ -76,6 +92,8 @@ function buildSourceDetails(base: string, referrer?: string): string {
 
 export async function POST(req: Request) {
   const ip = getClientKeyFromHeaders(req.headers);
+  const ipHash = hashIp(ip, env.NEXTAUTH_SECRET);
+  const userAgent = req.headers.get('user-agent')?.slice(0, 300) || undefined;
   const rl = rateLimit(ip, 'lead');
   if (!rl.allowed) {
     return NextResponse.json(
@@ -119,7 +137,7 @@ export async function POST(req: Request) {
     hasInvoice: (hasFile ? 'upload_now' : 'unknown') as 'upload_now' | 'unknown',
     monthlyEnergyCosts: 'unknown' as const,
     ownsProperty: map.ownsProperty,
-    contactPreference: 'phone' as const,
+    contactPreference: (d.whatsappConsent ? 'whatsapp' : 'phone') as ContactPreference,
     firstName,
     lastName,
     phone: d.phone,
@@ -157,6 +175,8 @@ export async function POST(req: Request) {
     ...(d.utmSource ? { utmSource: d.utmSource } : {}),
     ...(d.utmMedium ? { utmMedium: d.utmMedium } : {}),
     ...(d.utmCampaign ? { utmCampaign: d.utmCampaign } : {}),
+    ...(d.utmTerm ? { utmTerm: d.utmTerm } : {}),
+    ...(d.utmContent ? { utmContent: d.utmContent } : {}),
 
     customerType: map.customerType,
     interests: map.interests,
@@ -165,7 +185,7 @@ export async function POST(req: Request) {
     monthlyEnergyCosts: 'unknown' as const,
     annualConsumptionKwh: d.annualConsumptionKwh,
     ownsProperty: map.ownsProperty,
-    contactPreference: 'phone',
+    contactPreference: d.whatsappConsent ? 'whatsapp' : 'phone',
 
     firstName,
     lastName,
@@ -181,6 +201,27 @@ export async function POST(req: Request) {
       consentTextVersion: CONSENT_TEXT_VERSION,
       consentTimestamp: now,
       source: d.source ?? 'landingpage-hero',
+      consentPrivacyAccepted: true,
+      consentWhatsappAccepted: Boolean(d.whatsappConsent),
+      consentPartnerForwardingAccepted: Boolean(d.partnerForwardingConsent),
+      consentTextPrivacy: d.consentTextPrivacy ?? CONSENT_TEXT.privacy,
+      consentTextWhatsapp: d.consentTextWhatsapp ?? CONSENT_TEXT.whatsapp,
+      consentTextPartnerForwarding:
+        d.consentTextPartnerForwarding ?? CONSENT_TEXT.partnerForwarding,
+      consentVersion: d.consentVersion ?? CONSENT_TEXT_VERSION,
+      privacyPolicyVersion: d.privacyPolicyVersion ?? PRIVACY_POLICY_VERSION,
+      timestamp: now,
+      formSource: 'landingpage-hero',
+      pagePath: d.pagePath ?? '/',
+      referrer: d.referrer,
+      utmSource: d.utmSource,
+      utmMedium: d.utmMedium,
+      utmCampaign: d.utmCampaign,
+      utmTerm: d.utmTerm,
+      utmContent: d.utmContent,
+      technicalRequestId: d.technicalRequestId ?? newId('req'),
+      ipHash,
+      userAgent,
     },
 
     leadScore: score.score,

@@ -201,6 +201,7 @@ export function Footer() {
           <ul className="mt-6 space-y-[14px]">
             <li><Link className={`${linkCls} group`} href="/impressum">Impressum<ArrowIcon /></Link></li>
             <li><Link className={`${linkCls} group`} href="/datenschutz">Datenschutz<ArrowIcon /></Link></li>
+            <li><Link className={`${linkCls} group`} href="/cookie-richtlinie">Cookie-Richtlinie<ArrowIcon /></Link></li>
             <li><Link className={`${linkCls} group`} href="/agb">AGB<ArrowIcon /></Link></li>
             <li><Link className={`${linkCls} group`} href="/widerruf">Widerrufsrecht<ArrowIcon /></Link></li>
             <li><Link className={`${linkCls} group`} href="/datenschutz/anfrage">Auskunft / Löschung<ArrowIcon /></Link></li>

@@ -22,6 +22,8 @@ export interface AnswerState {
   message?: string;
   contactConsent?: boolean;
   privacyAccepted?: boolean;
+  whatsappConsent?: boolean;
+  partnerForwardingConsent?: boolean;
 }
 
 export type StepType = 'single_choice' | 'multi_choice' | 'contact' | 'consent';

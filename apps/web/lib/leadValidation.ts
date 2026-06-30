@@ -1,4 +1,5 @@
 import type { LeadCategory, LeadFormErrors, LeadPayload } from '@/types/lead';
+import { CONSENT_TEXTS, CONSENT_VERSION, PRIVACY_POLICY_VERSION } from '@/lib/consent';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,6 +15,7 @@ export interface LeadFormInput {
   annualConsumptionKwh: string;
   file: File | null;
   consent: boolean;
+  whatsappConsent?: boolean;
 }
 
 export function validateLeadForm(input: LeadFormInput): LeadFormErrors {
@@ -81,6 +83,18 @@ export function toLeadPayload(input: LeadFormInput): LeadPayload | null {
     email: input.email.trim(),
     zip: input.zip.trim(),
     consent: input.consent,
+    whatsappConsent: Boolean(input.whatsappConsent),
+    partnerForwardingConsent: false,
+    consentVersion: CONSENT_VERSION,
+    privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+    consentTextPrivacy: CONSENT_TEXTS.privacy,
+    consentTextWhatsapp: CONSENT_TEXTS.whatsapp,
+    consentTextPartnerForwarding: CONSENT_TEXTS.partnerForwarding,
+    pagePath: typeof window === 'undefined' ? undefined : window.location.pathname,
+    technicalRequestId:
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `agi-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     source: 'landingpage-hero',
     createdAt: new Date().toISOString(),
   };

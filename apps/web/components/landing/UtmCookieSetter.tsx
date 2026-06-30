@@ -23,8 +23,10 @@ export default function UtmCookieSetter() {
       const utmSource = sanitize(sp.get('utm_source'));
       const utmMedium = sanitize(sp.get('utm_medium'));
       const utmCampaign = sanitize(sp.get('utm_campaign'));
+      const utmTerm = sanitize(sp.get('utm_term'));
+      const utmContent = sanitize(sp.get('utm_content'));
 
-      if (!utmSource && !utmMedium && !utmCampaign) {
+      if (!utmSource && !utmMedium && !utmCampaign && !utmTerm && !utmContent) {
         // Kein UTM in URL - falls noch kein Cookie existiert, Referrer einmalig
         // als Fallback merken (z. B. aus Google ohne UTM-Tag).
         const hasAny =
@@ -49,6 +51,12 @@ export default function UtmCookieSetter() {
       }
       if (utmCampaign && !readCookie('agi_utm_campaign')) {
         writeCookie('agi_utm_campaign', utmCampaign);
+      }
+      if (utmTerm && !readCookie('agi_utm_term')) {
+        writeCookie('agi_utm_term', utmTerm);
+      }
+      if (utmContent && !readCookie('agi_utm_content')) {
+        writeCookie('agi_utm_content', utmContent);
       }
       if (!readCookie('agi_referrer') && document.referrer) {
         const ref = sanitize(document.referrer);

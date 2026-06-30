@@ -39,6 +39,7 @@ const STATIC_ENTRIES: SitemapEntry[] = [
   // Rechtliche Pflicht-/Hilfsseiten
   { path: '/datenschutz', priority: 0.3, changeFrequency: 'yearly' },
   { path: '/impressum', priority: 0.3, changeFrequency: 'yearly' },
+  { path: '/cookie-richtlinie', priority: 0.3, changeFrequency: 'yearly' },
   { path: '/agb', priority: 0.3, changeFrequency: 'yearly' },
   { path: '/widerruf', priority: 0.3, changeFrequency: 'yearly' },
 ];

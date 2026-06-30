@@ -5,6 +5,7 @@ import { z } from 'zod';
 import {
   CONSENT_TEXT,
   CONSENT_TEXT_VERSION,
+  PRIVACY_POLICY_VERSION,
   hashIp,
   newId,
   newReferralCode,
@@ -25,6 +26,9 @@ import { env } from '@/lib/env';
 const payloadSchema = z.object({
   state: z.record(z.unknown()),
   consentTextVersion: z.string().min(1),
+  privacyPolicyVersion: z.string().min(1).optional(),
+  pagePath: z.string().max(240).optional(),
+  technicalRequestId: z.string().max(120).optional(),
   submittedAtMs: z.number().int().nonnegative(),
   /** Optional: Empfehlungscode des werbenden Leads (aus /empfehlung/[code]). */
   referredByCode: z.string().min(4).max(16).optional(),
@@ -32,6 +36,8 @@ const payloadSchema = z.object({
   utmSource: z.string().max(60).optional(),
   utmMedium: z.string().max(60).optional(),
   utmCampaign: z.string().max(60).optional(),
+  utmTerm: z.string().max(60).optional(),
+  utmContent: z.string().max(60).optional(),
   referrer: z.string().max(200).optional(),
 });
 
@@ -65,6 +71,8 @@ function tryHostname(raw: string): string {
 export async function submitLead(formData: FormData): Promise<SubmitResult> {
   const h = await headers();
   const clientKey = getClientKeyFromHeaders(h);
+  const userAgent = h.get('user-agent')?.slice(0, 300) || undefined;
+  const ipHash = hashIp(clientKey, env.NEXTAUTH_SECRET);
   const rl = rateLimit(clientKey, 'funnel');
   if (!rl.allowed) return { ok: false, error: 'Zu viele Anfragen. Bitte warten Sie kurz.' };
 
@@ -79,6 +87,9 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
   }
 
   const s = payload.state as Record<string, unknown>;
+  const whatsappAccepted =
+    Boolean(s.whatsappConsent) || s.contactPreference === 'whatsapp';
+  const partnerForwardingAccepted = Boolean(s.partnerForwardingConsent);
 
   // Aus AnswerState in LeadFunnelInput überführen
   const input: LeadFunnelInput = {
@@ -89,9 +100,12 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     hasInvoice: asEnum(s.hasInvoice, 'unknown', ['upload_now', 'later', 'no', 'unknown']),
     monthlyEnergyCosts: asEnum(s.monthlyEnergyCosts, 'unknown', ['under_100', '100_200', '200_400', 'over_400', 'unknown']),
     ownsProperty: asEnum(s.ownsProperty, 'unknown', ['yes', 'no', 'business_property', 'rental_property', 'unknown']),
-    contactPreference: typeof s.contactPreference === 'string'
-      ? (asEnum(s.contactPreference, 'phone', ['phone', 'whatsapp', 'email']) as 'phone' | 'whatsapp' | 'email')
-      : undefined,
+    contactPreference:
+      typeof s.contactPreference === 'string'
+        ? (asEnum(s.contactPreference, 'phone', ['phone', 'whatsapp', 'email']) as 'phone' | 'whatsapp' | 'email')
+        : whatsappAccepted
+          ? 'whatsapp'
+          : undefined,
     firstName: String(s.firstName ?? '').trim(),
     lastName: String(s.lastName ?? '').trim(),
     phone: typeof s.phone === 'string' && s.phone.trim() ? s.phone.trim() : undefined,
@@ -105,6 +119,26 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
       consentTextVersion: payload.consentTextVersion,
       consentTimestamp: nowIso(),
       source: 'website_funnel',
+      consentPrivacyAccepted: Boolean(s.privacyAccepted),
+      consentWhatsappAccepted: whatsappAccepted,
+      consentPartnerForwardingAccepted: partnerForwardingAccepted,
+      consentTextPrivacy: CONSENT_TEXT.privacy,
+      consentTextWhatsapp: CONSENT_TEXT.whatsapp,
+      consentTextPartnerForwarding: CONSENT_TEXT.partnerForwarding,
+      consentVersion: CONSENT_TEXT_VERSION,
+      privacyPolicyVersion: payload.privacyPolicyVersion ?? PRIVACY_POLICY_VERSION,
+      timestamp: nowIso(),
+      formSource: 'seed-funnel',
+      pagePath: payload.pagePath ?? '/energiecheck',
+      referrer: payload.referrer,
+      utmSource: payload.utmSource,
+      utmMedium: payload.utmMedium,
+      utmCampaign: payload.utmCampaign,
+      utmTerm: payload.utmTerm,
+      utmContent: payload.utmContent,
+      technicalRequestId: payload.technicalRequestId ?? newId('req'),
+      ipHash,
+      userAgent,
     },
   };
 
@@ -169,6 +203,8 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     ...(payload.utmSource ? { utmSource: payload.utmSource } : {}),
     ...(payload.utmMedium ? { utmMedium: payload.utmMedium } : {}),
     ...(payload.utmCampaign ? { utmCampaign: payload.utmCampaign } : {}),
+    ...(payload.utmTerm ? { utmTerm: payload.utmTerm } : {}),
+    ...(payload.utmContent ? { utmContent: payload.utmContent } : {}),
     customerType: input.customerType,
     interests: input.interests,
     urgency: input.urgency,
@@ -201,7 +237,7 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     ctx: {
       actorId: 'anonymous',
       actorRole: 'anonymous',
-      ipHash: hashIp(clientKey, env.NEXTAUTH_SECRET),
+      ipHash,
     },
     action: 'lead.created',
     entity: 'lead',

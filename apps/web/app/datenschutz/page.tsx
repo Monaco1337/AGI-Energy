@@ -2,262 +2,772 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Header } from '@/components/landing/Header';
 import { Footer } from '@/components/landing/Footer';
-import { MissingDataWarning } from '@/components/legal/MissingDataWarning';
-import { COMPANY_INFO, displayField } from '@/data/companyInfo';
+import { COMPANY_INFO } from '@/data/companyInfo';
 
 export const metadata: Metadata = {
-  title: 'Datenschutzerklärung',
+  title: 'Datenschutzerklärung | AGI Energy',
   description:
-    'Datenschutzhinweise nach Art. 13 DSGVO: Verantwortlicher, Datenkategorien, Speicherdauer, Auftragsverarbeiter, Ihre Rechte.',
-  alternates: { canonical: '/datenschutz' },
+    'Datenschutzerklärung von AGI Energy – Informationen zur Verarbeitung personenbezogener Daten bei Website-Nutzung, Energieprüfungsanfragen, Rückruf, WhatsApp-Kontakt und Leadverarbeitung.',
+  alternates: { canonical: 'https://www.agienergy.de/datenschutz' },
   robots: { index: true, follow: true },
 };
 
+const sections = [
+  'Datenschutz auf einen Blick',
+  'Verantwortliche Stelle',
+  'Grundsätze der Datenverarbeitung',
+  'Art und Zweck des Angebots',
+  'Hosting und technische Bereitstellung',
+  'Technische Dienstleister und Systemverwaltung',
+  'Entwicklungs- und Versionsverwaltung',
+  'SSL-/TLS-Verschlüsselung',
+  'Energieprüfungsformular und Lead-Erfassung',
+  'Kontaktaufnahme per Telefon',
+  'Kontaktaufnahme per WhatsApp',
+  'Kontaktaufnahme per E-Mail',
+  'Interessenten- und Leadverwaltung',
+  'Weiterleitung von Anfragen',
+  'Einwilligungen im Formular',
+  'Pflichtangaben und freiwillige Angaben',
+  'Keine automatisierte Entscheidungsfindung',
+  'Cookies und lokale Speichertechnologien',
+  'Analyse, Tracking und Marketingtechnologien',
+  'Social-Media-Verlinkungen',
+  'Speicherdauer',
+  'Datensicherheit',
+  'Auftragsverarbeitung',
+  'Drittlandübermittlungen',
+  'Rechte der betroffenen Personen',
+  'Widerruf von Einwilligungen',
+  'Widerspruch gegen Verarbeitung auf Grundlage berechtigter Interessen',
+  'Beschwerderecht bei einer Aufsichtsbehörde',
+  'Änderungen dieser Datenschutzerklärung',
+] as const;
+
 export default function DatenschutzPage() {
   const c = COMPANY_INFO;
+
   return (
     <>
       <Header />
-      <main className="min-h-[60vh] bg-softWhite">
-        <section className="mx-auto max-w-3xl px-5 lg:px-8 pt-[calc(env(safe-area-inset-top)+var(--agi-header-row)+72px)] sm:pt-[calc(env(safe-area-inset-top)+var(--agi-header-row)+96px)] pb-20">
-          <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-energyGreen/90">
-            Rechtliches
-          </p>
-          <h1 className="mt-3 font-display text-[30px] sm:text-[40px] font-semibold text-navy leading-[1.1] tracking-tight">
-            Datenschutz­erklärung
-          </h1>
-          <p className="mt-3 text-[13px] text-slate/70">
-            Hinweise nach Art. 13 DSGVO · Stand: {c.lastUpdated}
-          </p>
+      <main className="min-h-[60vh] bg-softWhite text-navy">
+        <section className="mx-auto max-w-5xl px-5 pb-20 pt-[calc(env(safe-area-inset-top)+var(--agi-header-row)+56px)] sm:px-8 sm:pb-24 sm:pt-[calc(env(safe-area-inset-top)+var(--agi-header-row)+76px)]">
+          <nav aria-label="Breadcrumb" className="text-[13px] text-slate/75">
+            <Link href="/" className="underline-offset-4 hover:text-premiumBlue hover:underline">
+              Startseite
+            </Link>
+            <span aria-hidden="true" className="mx-2">
+              /
+            </span>
+            <span>Datenschutzerklärung</span>
+          </nav>
 
-          <div className="mt-8 space-y-10 text-[15px] leading-[1.75] text-slate">
-            <MissingDataWarning />
+          <header className="mt-8 border-b border-borderLight pb-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-energyGreen/90">
+              Datenschutz & Leadverarbeitung
+            </p>
+            <h1 className="mt-3 font-display text-[32px] font-semibold leading-[1.08] tracking-tight text-navy sm:text-[42px]">
+              Datenschutzerklärung
+            </h1>
+            <p className="mt-4 max-w-3xl text-[15.5px] leading-relaxed text-slate">
+              Informationen zur Verarbeitung personenbezogener Daten bei der
+              Nutzung der Website, bei Energieprüfungsanfragen, Rückruf,
+              E-Mail-Kontakt, WhatsApp-Kontakt und Leadverarbeitung.
+            </p>
+            <p className="mt-3 text-[13px] text-slate/70">Stand: {c.lastUpdated}</p>
+          </header>
 
-            <Section title="1. Verantwortlicher">
-              <p>
-                Verantwortlich für die Verarbeitung personenbezogener Daten auf
-                dieser Website im Sinne der DSGVO ist:
-              </p>
-              <p className="mt-3 text-navy">
-                {c.legalName}
-                <br />
-                {c.responsiblePerson}
-                <br />
-                {displayField(c.street)}
-                <br />
-                {displayField(c.postalCity)}
-                <br />
-                E-Mail:{' '}
-                <a
-                  href={`mailto:${c.contactEmail}`}
-                  className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen"
-                >
-                  {c.contactEmail}
-                </a>
-                <br />
-                Telefon: {displayField(c.contactPhone)}
-              </p>
-            </Section>
+          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+            <article className="space-y-10 text-[15.5px] leading-[1.78] text-slate">
+              <LegalSection index={1} title="Datenschutz auf einen Blick">
+                <p>
+                  Der Schutz Ihrer personenbezogenen Daten ist für AGI Energy
+                  besonders wichtig. Wir verarbeiten personenbezogene Daten
+                  ausschließlich im Einklang mit den geltenden
+                  datenschutzrechtlichen Vorschriften, insbesondere der
+                  Datenschutz-Grundverordnung (DSGVO), dem Bundesdatenschutzgesetz
+                  (BDSG), dem Telekommunikation-Digitale-Dienste-Datenschutz-Gesetz
+                  (TDDDG) sowie weiteren anwendbaren europäischen und nationalen
+                  Datenschutzbestimmungen.
+                </p>
+                <p>
+                  Diese Datenschutzerklärung informiert Sie über Art, Umfang,
+                  Zwecke und Rechtsgrundlagen der Verarbeitung personenbezogener
+                  Daten im Zusammenhang mit der Nutzung unserer Website, der
+                  Kontaktaufnahme, der Anfrage einer persönlichen Energieprüfung,
+                  der Bearbeitung von Strom-, Gas-, Photovoltaik- und
+                  Gewerbeenergie-Anfragen, der Kontaktaufnahme per Telefon, E-Mail
+                  oder WhatsApp sowie der Nutzung unserer digitalen Formular- und
+                  Lead-Systeme.
+                </p>
+              </LegalSection>
 
-            <Section title="2. Welche Daten wir verarbeiten">
-              <p>
-                Wir verarbeiten ausschließlich personenbezogene Daten, die Sie uns
-                aktiv übermitteln oder die technisch zwingend zur Auslieferung
-                dieser Website notwendig sind.
-              </p>
-              <h3 className="mt-5 font-semibold text-navy">2.1 Server-Logfiles</h3>
-              <p>
-                Beim Aufruf dieser Seite verarbeitet unser Hosting-Anbieter
-                automatisch übermittelte Daten (IP-Adresse, Datum/Uhrzeit, abgerufene
-                URL, Referrer, User-Agent). Diese werden gekürzt bzw. nach max.
-                14 Tagen automatisch gelöscht. Zweck: Auslieferung, Stabilität,
-                Abwehr von Angriffen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO
-                (berechtigtes Interesse).
-              </p>
-              <h3 className="mt-5 font-semibold text-navy">2.2 Energie-Check-Formulare</h3>
-              <p>
-                Wenn Sie den Energie-Check oder ein anderes Lead-Formular ausfüllen,
-                verarbeiten wir: Name, E-Mail, Telefon, PLZ, Wohnort,
-                Energie-Verbrauchsdaten und – sofern hochgeladen – Ihre
-                Jahresabrechnung. Zweck: persönliche Auswertung Ihrer Anfrage,
-                ggf. Vertragsanbahnung. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO
-                (Vertragsanbahnung) bzw. Art. 6 Abs. 1 lit. a DSGVO (Einwilligung),
-                je nach Sachlage.
-              </p>
-              <h3 className="mt-5 font-semibold text-navy">2.3 Newsletter (Double-Opt-In)</h3>
-              <p>
-                Bei Anmeldung zum Newsletter verarbeiten wir Ihre E-Mail-Adresse,
-                optional Vorname und Postleitzahl, sowie einen gekürzten Hash Ihrer
-                IP-Adresse zur Beweissicherung der Einwilligung. Sie erhalten eine
-                Bestätigungsmail – ohne Klick auf den Bestätigungslink werden Sie
-                nicht angeschrieben. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO
-                (Einwilligung). Widerruf jederzeit über den Abmelde-Link in jeder
-                Newsletter-Mail oder per E-Mail an{' '}
-                <a href={`mailto:${c.contactEmail}`} className="text-premiumBlue underline underline-offset-4">
-                  {c.contactEmail}
-                </a>
-                .
-              </p>
-              <h3 className="mt-5 font-semibold text-navy">2.4 UTM-/Referrer-Tracking</h3>
-              <p>
-                Wir messen, über welchen Kanal Sie auf unsere Seite gekommen sind
-                (z. B. <code className="font-mono text-[13px]">utm_source=linkedin</code>),
-                indem wir diese Information in einem First-Party-Cookie für 30 Tage
-                speichern. Es findet KEIN Profil-Tracking, KEINE Weitergabe an
-                Werbenetzwerke und KEINE seitenübergreifende Beobachtung statt.
-                Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO – berechtigtes Interesse
-                an einer wirksamen Erfolgsmessung unserer eigenen Distribution.
-                Widerspruch jederzeit möglich (siehe Abschnitt 8).
-              </p>
-              <h3 className="mt-5 font-semibold text-navy">2.5 Empfehlungs-Cookie</h3>
-              <p>
-                Wenn Sie über einen Empfehlungslink eines anderen Nutzers kommen
-                (<code className="font-mono text-[13px]">/empfehlung/[code]</code>),
-                speichern wir den Empfehlungscode für 60 Tage in einem
-                First-Party-Cookie, damit der Empfehlende bei erfolgreicher
-                Lead-Erstellung korrekt zugeordnet werden kann.
-              </p>
-            </Section>
+              <LegalSection index={2} title="Verantwortliche Stelle">
+                <p>Verantwortliche im Sinne von Art. 4 Nr. 7 DSGVO ist:</p>
+                <address className="not-italic text-navy">
+                  {c.responsiblePerson}
+                  <br />
+                  {c.street}
+                  <br />
+                  {c.postalCity}
+                  <br />
+                  {c.country}
+                </address>
+                <p>
+                  Telefon:{' '}
+                  <a href={`tel:${c.contactPhone.replace(/\s+/g, '')}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    {c.contactPhone}
+                  </a>
+                  <br />
+                  E-Mail:{' '}
+                  <a href={`mailto:${c.contactEmail}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    {c.contactEmail}
+                  </a>
+                  <br />
+                  Website:{' '}
+                  <a href="https://www.agienergy.de" className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    https://www.agienergy.de
+                  </a>
+                </p>
+              </LegalSection>
 
-            <Section title="3. Cookies im Detail">
-              <div className="overflow-x-auto">
-                <table className="w-full text-[13.5px] border border-borderLight rounded-elo overflow-hidden">
-                  <thead className="bg-paper2 text-navy">
-                    <tr>
-                      <th className="text-left p-3 font-semibold">Name</th>
-                      <th className="text-left p-3 font-semibold">Zweck</th>
-                      <th className="text-left p-3 font-semibold">Laufzeit</th>
-                      <th className="text-left p-3 font-semibold">Kategorie</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-borderLight">
-                    <Row n="elo_consent" p="Speichert Ihre Einwilligungs­auswahl." l="12 Monate" k="Essenziell" />
-                    <Row n="elo_session" p="Authentifizierung im Admin-Bereich (nur bei eingeloggten Vertriebs­partnern)." l="Session" k="Essenziell" />
-                    <Row n="agi_ref" p="Speichert den Empfehlungscode bei Klick auf Empfehlungslink." l="60 Tage" k="Funktional" />
-                    <Row n="agi_utm_source" p="Speichert die ursprüngliche Akquise-Quelle (First-Touch)." l="30 Tage" k="Funktional" />
-                    <Row n="agi_utm_medium" p="Speichert das Akquise-Medium (z. B. social, email)." l="30 Tage" k="Funktional" />
-                    <Row n="agi_utm_campaign" p="Speichert die Akquise-Kampagne." l="30 Tage" k="Funktional" />
-                    <Row n="agi_referrer" p="Speichert den Referrer-Hostname als Fallback." l="30 Tage" k="Funktional" />
-                  </tbody>
-                </table>
+              <LegalSection index={3} title="Grundsätze der Datenverarbeitung">
+                <p>
+                  Wir verarbeiten personenbezogene Daten ausschließlich nach den
+                  Grundsätzen des Art. 5 DSGVO.
+                </p>
+                <Bullets
+                  items={[
+                    'Rechtmäßigkeit, Verarbeitung nach Treu und Glauben und Transparenz',
+                    'Zweckbindung',
+                    'Datenminimierung',
+                    'Richtigkeit',
+                    'Speicherbegrenzung',
+                    'Integrität und Vertraulichkeit',
+                    'Rechenschaftspflicht',
+                  ]}
+                />
+                <p>
+                  Personenbezogene Daten werden nur verarbeitet, soweit dies zur
+                  Bereitstellung der Website, zur Bearbeitung Ihrer Anfrage, zur
+                  Durchführung vorvertraglicher Maßnahmen, zur Kontaktaufnahme, zur
+                  technischen Sicherheit, zur Dokumentation oder aufgrund
+                  gesetzlicher Verpflichtungen erforderlich ist.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={4} title="Art und Zweck des Angebots">
+                <p>
+                  AGI Energy bietet digitale Kontaktmöglichkeiten und persönliche
+                  Energieprüfungen in den Bereichen Strom, Gas, Photovoltaik,
+                  Anbieterwechsel, Jahresabrechnung, Verbrauchsoptimierung und
+                  Gewerbeenergie an.
+                </p>
+                <p>
+                  Über unsere Website können Interessenten eine Anfrage stellen,
+                  damit ihre Angaben geprüft und sie anschließend durch die
+                  verantwortliche Anbieterin oder berechtigte Ansprechpartner
+                  kontaktiert werden können.
+                </p>
+                <Bullets
+                  items={[
+                    'Bereitstellung der Website',
+                    'Erfassung von Energieprüfungsanfragen',
+                    'Prüfung und Einordnung der Anfrage',
+                    'Kontaktaufnahme per Telefon, E-Mail oder WhatsApp',
+                    'Vorbereitung einer persönlichen Energieprüfung',
+                    'Bearbeitung von Anfragen zu Strom, Gas, Photovoltaik oder Gewerbeenergie',
+                    'Dokumentation des Anfrageverlaufs',
+                    'Organisation der Lead- und Interessentenverwaltung',
+                    'Qualitätssicherung und Missbrauchsprävention',
+                    'technische Absicherung des Systems',
+                    'Erfüllung gesetzlicher Nachweis- und Dokumentationspflichten',
+                  ]}
+                />
+              </LegalSection>
+
+              <LegalSection index={5} title="Hosting und technische Bereitstellung">
+                <p>
+                  Unsere Website wird über Vercel Inc. bereitgestellt. Beim Besuch
+                  unserer Website werden automatisch technische Zugriffsdaten
+                  verarbeitet. Hierzu können insbesondere gehören:
+                </p>
+                <Bullets
+                  items={[
+                    'IP-Adresse',
+                    'Browsertyp und Browserversion',
+                    'Betriebssystem',
+                    'Referrer-URL',
+                    'Datum und Uhrzeit des Zugriffs',
+                    'aufgerufene Seiten und Dateien',
+                    'HTTP-Statuscodes',
+                    'Server-Logdaten',
+                    'technische Geräteinformationen',
+                    'Ladezeiten und technische Fehlerdaten',
+                  ]}
+                />
+                <p>
+                  Die Verarbeitung erfolgt zur Bereitstellung der Website, zur
+                  Systemsicherheit, zur Fehleranalyse, zur Missbrauchserkennung,
+                  zur Stabilität des Betriebs sowie zur Optimierung der technischen
+                  Verfügbarkeit.
+                </p>
+                <Law>Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</Law>
+                <p>
+                  Unser berechtigtes Interesse liegt in der sicheren, stabilen und
+                  technisch fehlerfreien Bereitstellung unserer Website. Soweit
+                  personenbezogene Daten außerhalb der EU oder des EWR verarbeitet
+                  werden, erfolgt dies nur auf Grundlage geeigneter Garantien gemäß
+                  Art. 44 ff. DSGVO.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={6} title="Technische Dienstleister und Systemverwaltung">
+                <p>
+                  Zur technischen Umsetzung, Wartung, Weiterentwicklung,
+                  Formularverarbeitung, Leadverwaltung, Systemadministration und
+                  technischen Absicherung der Website können externe technische
+                  Dienstleister eingesetzt werden.
+                </p>
+                <Bullets
+                  items={[
+                    'Hosting-Dienstleister',
+                    'Webentwicklungs- und Wartungsdienstleister',
+                    'CRM- oder Datenbankanbieter',
+                    'E-Mail-Dienstleister',
+                    'Formular- und Automatisierungsdienste',
+                    'Sicherheits- und Monitoring-Dienste',
+                    'Support- und Wartungsdienstleister',
+                  ]}
+                />
+                <p>
+                  Aktuell im Projektkontext erkennbar sind insbesondere Vercel für
+                  Hosting, Neon/Vercel Postgres für Datenbankfunktionen und Resend
+                  für transaktionale E-Mails, soweit der E-Mail-Versand aktiviert
+                  ist. Diese Dienstleister handeln nicht als Anbieter des
+                  Energieprüfungsangebots, sondern ausschließlich zur technischen
+                  Bereitstellung, Verwaltung, Verarbeitung und Weiterleitung
+                  eingehender Anfragen.
+                </p>
+                <Law>
+                  Rechtsgrundlagen: Art. 6 Abs. 1 lit. b DSGVO, Art. 6 Abs. 1
+                  lit. f DSGVO, Art. 28 DSGVO.
+                </Law>
+              </LegalSection>
+
+              <LegalSection index={7} title="Entwicklungs- und Versionsverwaltung">
+                <p>
+                  Zur Entwicklung, Wartung und technischen Verwaltung der Website
+                  kann eine Entwicklungs- und Versionsverwaltungsplattform wie
+                  GitHub eingesetzt werden. Diese dient der technischen Verwaltung
+                  von Quellcode, Deployment-Prozessen, Fehlerbehebung, Wartung und
+                  Weiterentwicklung der Website.
+                </p>
+                <p>
+                  Eine Verarbeitung personenbezogener Besucherdaten über
+                  Entwicklungsplattformen erfolgt im Rahmen des normalen
+                  Websitebesuchs grundsätzlich nicht. Personenbezogene Daten dürfen
+                  dort nur verarbeitet werden, wenn dies für technische
+                  Fehleranalyse, Support, Wartung oder Sicherheitsprüfung
+                  erforderlich ist und eine entsprechende Rechtsgrundlage besteht.
+                </p>
+                <Law>Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</Law>
+              </LegalSection>
+
+              <LegalSection index={8} title="SSL-/TLS-Verschlüsselung">
+                <p>
+                  Diese Website nutzt moderne SSL-/TLS-Verschlüsselung. Die
+                  verschlüsselte Übertragung schützt die Kommunikation zwischen
+                  Ihrem Endgerät und unserer Website vor unbefugtem Zugriff durch
+                  Dritte. Eine verschlüsselte Verbindung erkennen Sie in der Regel
+                  an der Adresszeile Ihres Browsers.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={9} title="Energieprüfungsformular und Lead-Erfassung">
+                <p>
+                  Über unsere Website können Sie eine Anfrage zur persönlichen
+                  Energieprüfung stellen. Dabei können insbesondere folgende
+                  personenbezogene Daten verarbeitet werden:
+                </p>
+                <Bullets
+                  items={[
+                    'Vorname und Nachname',
+                    'Telefonnummer',
+                    'E-Mail-Adresse',
+                    'Wohnort oder Postleitzahl',
+                    'gewünschter Kontaktweg',
+                    'Interesse an Strom, Gas, Photovoltaik oder Gewerbeenergie',
+                    'Angaben zu bestehendem Anbieter oder bestehendem Vertrag',
+                    'Angaben zu Abschlag, Verbrauch, Jahresabrechnung oder Energiekosten',
+                    'Zeitpunkt der Anfrage',
+                    'Einwilligungsstatus, Formularversion und Consent-Version',
+                    'technische Metadaten zur Anfrage',
+                    'freiwillig übermittelte Zusatzinformationen',
+                  ]}
+                />
+                <p>
+                  Die Verarbeitung erfolgt ausschließlich zur Bearbeitung Ihrer
+                  Anfrage, zur Prüfung Ihres Energiebedarfs, zur Vorbereitung einer
+                  möglichen persönlichen Energieprüfung und zur anschließenden
+                  Kontaktaufnahme.
+                </p>
+                <Law>
+                  Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO. Soweit Angaben
+                  freiwillig erfolgen oder zusätzliche Kommunikationswege wie
+                  WhatsApp ausgewählt werden, kann die Verarbeitung zusätzlich auf
+                  Ihrer Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO beruhen.
+                </Law>
+              </LegalSection>
+
+              <LegalSection index={10} title="Kontaktaufnahme per Telefon">
+                <p>
+                  Wenn Sie eine Anfrage über unsere Website stellen oder einen
+                  Rückruf wünschen, können wir Sie telefonisch kontaktieren.
+                  Dabei können insbesondere Name, Telefonnummer, Zeitpunkt der
+                  Anfrage, gewünschter Rückrufzeitpunkt, Gesprächsnotizen,
+                  Bearbeitungsstatus, Ergebnis der Kontaktaufnahme, Folgeaufgaben
+                  und Wiedervorlagen verarbeitet werden.
+                </p>
+                <Law>
+                  Rechtsgrundlagen: Art. 6 Abs. 1 lit. b DSGVO und Art. 6 Abs. 1
+                  lit. f DSGVO.
+                </Law>
+              </LegalSection>
+
+              <LegalSection index={11} title="Kontaktaufnahme per WhatsApp">
+                <p>
+                  Sofern Sie ausdrücklich einwilligen oder WhatsApp als Kontaktweg
+                  auswählen, können wir Sie über WhatsApp kontaktieren. Ohne klare
+                  Einwilligung oder eindeutig gewählten WhatsApp-Kontaktweg erfolgt
+                  keine WhatsApp-Kommunikation.
+                </p>
+                <Bullets
+                  items={[
+                    'Name',
+                    'Telefonnummer',
+                    'WhatsApp-Profilinformationen, soweit sichtbar',
+                    'Nachrichteninhalte',
+                    'Kommunikationszeitpunkte',
+                    'Anfrage- und Bearbeitungsstatus',
+                    'freiwillig übermittelte Dokumente, Bilder oder Zusatzinformationen',
+                  ]}
+                />
+                <p>
+                  Die Einwilligung ist jederzeit mit Wirkung für die Zukunft
+                  widerrufbar, insbesondere per E-Mail an{' '}
+                  <a href={`mailto:${c.contactEmail}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    {c.contactEmail}
+                  </a>{' '}
+                  oder direkt über WhatsApp. Wenn Sie keine Kontaktaufnahme über
+                  WhatsApp wünschen, können Sie Telefon oder E-Mail nutzen.
+                </p>
+                <p>
+                  Bitte beachten Sie, dass bei der Nutzung von WhatsApp
+                  personenbezogene Daten auch durch den Anbieter des
+                  Kommunikationsdienstes verarbeitet werden können. Auf diese
+                  eigenständige Datenverarbeitung haben wir keinen vollständigen
+                  Einfluss.
+                </p>
+                <Law>Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO.</Law>
+              </LegalSection>
+
+              <LegalSection index={12} title="Kontaktaufnahme per E-Mail">
+                <p>
+                  Wenn Sie uns per E-Mail kontaktieren oder im Formular Ihre
+                  E-Mail-Adresse angeben, verarbeiten wir Ihre Angaben zur
+                  Bearbeitung Ihrer Anfrage. Hierzu können insbesondere Name,
+                  E-Mail-Adresse, Nachrichteninhalt, Betreff, Kommunikationshistorie,
+                  technische E-Mail-Metadaten und Zeitpunkt der Kontaktaufnahme
+                  gehören.
+                </p>
+                <Law>
+                  Rechtsgrundlagen: Art. 6 Abs. 1 lit. b DSGVO und Art. 6 Abs. 1
+                  lit. f DSGVO.
+                </Law>
+              </LegalSection>
+
+              <LegalSection index={13} title="Interessenten- und Leadverwaltung">
+                <p>
+                  Zur Bearbeitung, Organisation und Nachverfolgung eingehender
+                  Anfragen können personenbezogene Daten in internen Verwaltungs-,
+                  CRM- oder Lead-Systemen gespeichert werden.
+                </p>
+                <Bullets
+                  items={[
+                    'Stammdaten und Kontaktdaten',
+                    'Anfragehistorie und Kommunikationsverlauf',
+                    'Interessenbereich und Energieart',
+                    'Bearbeitungsstatus, Kontaktversuche, Wiedervorlagen und Notizen',
+                    'Einwilligungsnachweise und technische Übermittlungsdaten',
+                    'Leadquelle, Landingpage, UTM-Parameter und Referrer-Informationen',
+                    'Zeitstempel und Bearbeiterinformationen',
+                  ]}
+                />
+                <p>
+                  Die Speicherung erfolgt zur strukturierten Bearbeitung Ihrer
+                  Anfrage, zur Kontaktaufnahme, zur Qualitätssicherung, zur
+                  Nachweisbarkeit der Einwilligung, zur Missbrauchsprävention und
+                  zur internen Organisation.
+                </p>
+                <Law>
+                  Rechtsgrundlagen: Art. 6 Abs. 1 lit. b DSGVO und Art. 6 Abs. 1
+                  lit. f DSGVO.
+                </Law>
+              </LegalSection>
+
+              <LegalSection index={14} title="Weiterleitung von Anfragen">
+                <p>
+                  Eingehende Anfragen werden grundsätzlich an die verantwortliche
+                  Anbieterin {c.responsiblePerson} weitergeleitet oder durch
+                  berechtigte Personen in ihrem Auftrag bearbeitet. Eine Weitergabe
+                  an weitere Dritte erfolgt nur, soweit dies zur Bearbeitung Ihrer
+                  Anfrage erforderlich ist, gesetzlich erlaubt ist oder Sie
+                  ausdrücklich eingewilligt haben.
+                </p>
+                <Bullets
+                  items={[
+                    `${c.responsiblePerson} als verantwortliche Anbieterin`,
+                    'berechtigte interne oder externe Ansprechpartner zur Anfragebearbeitung',
+                    'technische Dienstleister',
+                    'Hosting- und IT-Dienstleister',
+                    'CRM- oder Formularsystemanbieter',
+                    'E-Mail- und Kommunikationsdienstleister',
+                    'Energie- oder Photovoltaik-Ansprechpartner, sofern dies für die gewünschte Anfragebearbeitung erforderlich ist oder von Ihnen gewünscht wurde',
+                  ]}
+                />
+                <Law>
+                  Rechtsgrundlagen: Art. 6 Abs. 1 lit. b DSGVO, Art. 6 Abs. 1
+                  lit. a DSGVO und Art. 6 Abs. 1 lit. f DSGVO.
+                </Law>
+              </LegalSection>
+
+              <LegalSection index={15} title="Einwilligungen im Formular">
+                <p>
+                  Vor dem Absenden bestimmter Formulare kann es erforderlich sein,
+                  dass Sie Hinweise bestätigen oder Einwilligungen erteilen. Dies
+                  betrifft insbesondere die Kenntnisnahme der Datenschutzerklärung,
+                  die Verarbeitung Ihrer Angaben zur Bearbeitung der
+                  Energieprüfungsanfrage, die Kontaktaufnahme per Telefon oder
+                  E-Mail, die optionale Kontaktaufnahme per WhatsApp und, soweit
+                  genutzt, die Weiterleitung an berechtigte Ansprechpartner.
+                </p>
+                <p>
+                  Einwilligungen werden protokolliert, um die Rechtmäßigkeit der
+                  Verarbeitung nachweisen zu können. Hierbei können insbesondere
+                  Einwilligungstext, Zeitpunkt, Formularversion, Consent-Version,
+                  IP-Hash oder technische Anfragekennung, ausgewählte Kontaktwege,
+                  Herkunft der Anfrage und UTM-Parameter gespeichert werden.
+                </p>
+                <Law>
+                  Rechtsgrundlagen: Art. 6 Abs. 1 lit. a DSGVO, Art. 7 DSGVO und
+                  Art. 6 Abs. 1 lit. f DSGVO.
+                </Law>
+              </LegalSection>
+
+              <LegalSection index={16} title="Pflichtangaben und freiwillige Angaben">
+                <p>
+                  Bestimmte Angaben sind erforderlich, damit wir Ihre Anfrage
+                  bearbeiten und Sie kontaktieren können. Erforderlich können
+                  insbesondere Name, Telefonnummer oder E-Mail-Adresse, gewünschter
+                  Kontaktweg und grundlegende Angaben zum Anliegen sein.
+                </p>
+                <p>
+                  Weitere Angaben, insbesondere detaillierte Informationen zu
+                  Verbrauch, Anbieter, Vertragsdaten, Jahresabrechnungen oder
+                  Zusatzinformationen, erfolgen freiwillig, können aber für eine
+                  sachgerechte Energieprüfung erforderlich sein. Wenn erforderliche
+                  Angaben nicht bereitgestellt werden, kann Ihre Anfrage
+                  möglicherweise nicht oder nur eingeschränkt bearbeitet werden.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={17} title="Keine automatisierte Entscheidungsfindung">
+                <p>
+                  Eine automatisierte Entscheidungsfindung einschließlich Profiling
+                  im Sinne von Art. 22 DSGVO findet nicht statt. Anfragen können
+                  technisch sortiert, kategorisiert oder priorisiert werden, um
+                  eine effiziente Bearbeitung zu ermöglichen. Eine rechtlich
+                  relevante Entscheidung ausschließlich auf Grundlage
+                  automatisierter Verarbeitung erfolgt nicht.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={18} title="Cookies und lokale Speichertechnologien">
+                <p>
+                  Unsere Website verwendet technisch notwendige Cookies und
+                  vergleichbare lokale Speichertechnologien. Diese dienen
+                  insbesondere der technischen Bereitstellung der Website, der
+                  Sicherheit, der Speicherung von Einstellungen, der
+                  Formularfunktionalität, der Verbesserung der Benutzerfreundlichkeit
+                  und dem Schutz vor Missbrauch.
+                </p>
+                <Law>
+                  Rechtsgrundlagen: § 25 Abs. 2 TDDDG und Art. 6 Abs. 1 lit. f
+                  DSGVO. Sofern Analyse-, Komfort-, Tracking- oder
+                  Marketingtechnologien eingesetzt werden, erfolgt dies
+                  ausschließlich auf Grundlage Ihrer ausdrücklichen Einwilligung
+                  nach § 25 Abs. 1 TDDDG und Art. 6 Abs. 1 lit. a DSGVO.
+                </Law>
+                <p>
+                  Einzelheiten finden Sie in unserer{' '}
+                  <Link href="/cookie-richtlinie" className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    Cookie-Richtlinie
+                  </Link>
+                  .
+                </p>
+              </LegalSection>
+
+              <LegalSection index={19} title="Analyse, Tracking und Marketingtechnologien">
+                <p>
+                  Nach aktuellem Projektstand werden keine externen Marketing-Pixel
+                  wie Meta Pixel und keine externen Analyse-Systeme wie Google
+                  Analytics geladen. First-Party-Informationen wie UTM-Parameter,
+                  Referrer und Empfehlungscodes können zur internen
+                  Erfolgsmessung und Zuordnung einer Anfrage verarbeitet werden.
+                </p>
+                <p>
+                  Sofern künftig Analyse-, Tracking-, Remarketing- oder
+                  Marketingtechnologien eingesetzt werden, erfolgt der Einsatz nur
+                  nach vorheriger Einwilligung. Anbieter, Zwecke, Datenkategorien,
+                  Rechtsgrundlagen und mögliche Drittlandübermittlungen werden dann
+                  konkret ergänzt.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={20} title="Social-Media-Verlinkungen">
+                <p>
+                  Unsere Website kann Verlinkungen zu sozialen Netzwerken oder
+                  externen Plattformen enthalten. Beim bloßen Besuch unserer
+                  Website werden dadurch keine personenbezogenen Daten an die
+                  jeweiligen Anbieter übertragen. Eine Datenübermittlung erfolgt
+                  erst, wenn Sie den entsprechenden Link aktiv anklicken oder eine
+                  externe Plattform nutzen. Für die Datenverarbeitung auf den
+                  verlinkten Plattformen ist grundsätzlich der jeweilige Anbieter
+                  verantwortlich.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={21} title="Speicherdauer">
+                <p>
+                  Wir speichern personenbezogene Daten nur so lange, wie dies für
+                  die jeweiligen Zwecke erforderlich ist.
+                </p>
+                <Bullets
+                  items={[
+                    'Kontakt- und Energieprüfungsanfragen: bis zur abschließenden Bearbeitung und darüber hinaus, soweit Dokumentations-, Nachweis- oder berechtigte Interessen bestehen',
+                    'Kommunikationsdaten: solange dies für Bearbeitung, Nachverfolgung, Qualitätssicherung oder Nachweiszwecke erforderlich ist',
+                    'Einwilligungsnachweise: solange dies zur rechtlichen Nachweisbarkeit erforderlich ist',
+                    'Server-Logdaten: grundsätzlich maximal 30 Tage, soweit keine längere Speicherung aus Sicherheitsgründen erforderlich ist',
+                    'gesetzlich relevante Unterlagen: entsprechend gesetzlicher Aufbewahrungspflichten',
+                    'Daten zu widerrufenen Einwilligungen: soweit erforderlich zur Dokumentation des Widerrufs und zur Sicherstellung, dass keine weitere einwilligungsbasierte Verarbeitung erfolgt',
+                  ]}
+                />
+              </LegalSection>
+
+              <LegalSection index={22} title="Datensicherheit">
+                <p>
+                  Wir treffen technische und organisatorische Maßnahmen gemäß Art.
+                  32 DSGVO, um ein dem Risiko angemessenes Schutzniveau
+                  sicherzustellen.
+                </p>
+                <Bullets
+                  items={[
+                    'SSL-/TLS-Verschlüsselung',
+                    'rollenbasierte Berechtigungskonzepte',
+                    'Zugriffskontrollen und Zugriffsbeschränkungen',
+                    'Protokollierungen',
+                    'technische Systemüberwachung',
+                    'sichere Formularverarbeitung',
+                    'Schutz vor unbefugtem Zugriff',
+                    'regelmäßige Sicherheitsupdates',
+                    'Backups und Wiederherstellungskonzepte',
+                    'Begrenzung von Zugriffsrechten auf erforderliche Personen',
+                    'organisatorische Vertraulichkeitsmaßnahmen',
+                  ]}
+                />
+              </LegalSection>
+
+              <LegalSection index={23} title="Auftragsverarbeitung">
+                <p>
+                  Wir setzen externe Dienstleister ein, die personenbezogene Daten
+                  ausschließlich in unserem Auftrag und auf Grundlage geeigneter
+                  vertraglicher Vereinbarungen verarbeiten. Soweit Dienstleister
+                  personenbezogene Daten in unserem Auftrag verarbeiten, erfolgt
+                  dies auf Grundlage eines Auftragsverarbeitungsvertrages gemäß
+                  Art. 28 DSGVO.
+                </p>
+                <div className="mt-4 grid gap-3">
+                  {c.processors.map((processor) => (
+                    <div key={processor.name} className="rounded-elo border border-borderLight bg-white p-4">
+                      <p className="font-semibold text-navy">{processor.name}</p>
+                      <p className="mt-1 text-[13.5px]">Zweck: {processor.purpose}</p>
+                      <p className="mt-1 text-[13.5px]">Standort: {processor.location}</p>
+                      <p className="mt-1 text-[13.5px]">Grundlage: {processor.basis}</p>
+                    </div>
+                  ))}
+                </div>
+              </LegalSection>
+
+              <LegalSection index={24} title="Drittlandübermittlungen">
+                <p>
+                  Sofern personenbezogene Daten an Dienstleister oder Anbieter
+                  außerhalb der Europäischen Union oder des Europäischen
+                  Wirtschaftsraums übermittelt werden, erfolgt dies nur, soweit
+                  hierfür eine gesetzliche Grundlage besteht.
+                </p>
+                <Bullets
+                  items={[
+                    'Angemessenheitsbeschluss der Europäischen Kommission',
+                    'EU-Standardvertragsklauseln',
+                    'zusätzliche technische und organisatorische Schutzmaßnahmen',
+                    'ausdrückliche Einwilligung, soweit erforderlich',
+                    'sonstige gesetzlich zulässige Garantien gemäß Art. 44 ff. DSGVO',
+                  ]}
+                />
+              </LegalSection>
+
+              <LegalSection index={25} title="Rechte der betroffenen Personen">
+                <p>Sie haben nach Maßgabe der gesetzlichen Vorschriften jederzeit folgende Rechte:</p>
+                <Bullets
+                  items={[
+                    'Recht auf Auskunft gemäß Art. 15 DSGVO',
+                    'Recht auf Berichtigung gemäß Art. 16 DSGVO',
+                    'Recht auf Löschung gemäß Art. 17 DSGVO',
+                    'Recht auf Einschränkung der Verarbeitung gemäß Art. 18 DSGVO',
+                    'Recht auf Datenübertragbarkeit gemäß Art. 20 DSGVO',
+                    'Recht auf Widerspruch gemäß Art. 21 DSGVO',
+                    'Recht auf Widerruf erteilter Einwilligungen gemäß Art. 7 Abs. 3 DSGVO',
+                    'Recht auf Beschwerde bei einer Datenschutzaufsichtsbehörde',
+                  ]}
+                />
+                <p>
+                  Zur Wahrnehmung Ihrer Rechte können Sie sich jederzeit an{' '}
+                  <a href={`mailto:${c.contactEmail}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    {c.contactEmail}
+                  </a>{' '}
+                  wenden.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={26} title="Widerruf von Einwilligungen">
+                <p>
+                  Sie können eine erteilte Einwilligung jederzeit mit Wirkung für
+                  die Zukunft widerrufen. Der Widerruf berührt nicht die
+                  Rechtmäßigkeit der Verarbeitung, die bis zum Widerruf auf
+                  Grundlage der Einwilligung erfolgt ist.
+                </p>
+                <p>
+                  Ein Widerruf kann insbesondere per E-Mail an{' '}
+                  <a href={`mailto:${c.contactEmail}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    {c.contactEmail}
+                  </a>{' '}
+                  oder über die im jeweiligen Kommunikationskanal bereitgestellten
+                  Kontaktmöglichkeiten erfolgen.
+                </p>
+              </LegalSection>
+
+              <LegalSection
+                index={27}
+                title="Widerspruch gegen Verarbeitung auf Grundlage berechtigter Interessen"
+              >
+                <p>
+                  Wenn wir personenbezogene Daten auf Grundlage von Art. 6 Abs. 1
+                  lit. f DSGVO verarbeiten, haben Sie das Recht, aus Gründen, die
+                  sich aus Ihrer besonderen Situation ergeben, jederzeit Widerspruch
+                  gegen diese Verarbeitung einzulegen.
+                </p>
+                <p>
+                  Im Falle eines Widerspruchs verarbeiten wir die betroffenen
+                  personenbezogenen Daten nicht mehr, es sei denn, wir können
+                  zwingende schutzwürdige Gründe für die Verarbeitung nachweisen
+                  oder die Verarbeitung dient der Geltendmachung, Ausübung oder
+                  Verteidigung von Rechtsansprüchen.
+                </p>
+              </LegalSection>
+
+              <LegalSection index={28} title="Beschwerderecht bei einer Aufsichtsbehörde">
+                <p>
+                  Sie haben das Recht, sich bei einer Datenschutzaufsichtsbehörde
+                  zu beschweren, wenn Sie der Ansicht sind, dass die Verarbeitung
+                  Ihrer personenbezogenen Daten gegen Datenschutzrecht verstößt.
+                </p>
+                <p>
+                  Zuständige Datenschutzaufsichtsbehörde in Nordrhein-Westfalen:
+                </p>
+                <address className="not-italic text-navy">
+                  Landesbeauftragte für Datenschutz und Informationsfreiheit
+                  Nordrhein-Westfalen
+                  <br />
+                  Kavalleriestraße 2–4
+                  <br />
+                  40213 Düsseldorf
+                  <br />
+                  Deutschland
+                  <br />
+                  Website:{' '}
+                  <a href="https://www.ldi.nrw.de" className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    https://www.ldi.nrw.de
+                  </a>
+                </address>
+              </LegalSection>
+
+              <LegalSection index={29} title="Änderungen dieser Datenschutzerklärung">
+                <p>
+                  Wir behalten uns vor, diese Datenschutzerklärung anzupassen,
+                  sofern dies aufgrund technischer, organisatorischer, rechtlicher
+                  oder wirtschaftlicher Änderungen erforderlich wird. Es gilt
+                  jeweils die aktuelle auf unserer Website veröffentlichte Fassung.
+                </p>
+              </LegalSection>
+            </article>
+
+            <aside className="lg:sticky lg:top-[calc(var(--agi-header-row)+2rem)]">
+              <div className="rounded-eloLg border border-borderLight bg-white p-5 shadow-soft">
+                <h2 className="font-display text-[17px] font-semibold text-navy">
+                  Verantwortliche Stelle
+                </h2>
+                <p className="mt-4 text-[13.5px] leading-relaxed text-slate">
+                  {c.responsiblePerson}
+                  <br />
+                  {c.street}
+                  <br />
+                  {c.postalCity}
+                  <br />
+                  {c.country}
+                </p>
+                <p className="mt-4 text-[13.5px] leading-relaxed">
+                  <a href={`mailto:${c.contactEmail}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    {c.contactEmail}
+                  </a>
+                  <br />
+                  <a href={`tel:${c.contactPhone.replace(/\s+/g, '')}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
+                    {c.contactPhone}
+                  </a>
+                </p>
               </div>
-              <p className="mt-4 text-[13px] text-slate/80">
-                Wir setzen KEINE Tracking-Cookies von Drittanbietern (kein Google
-                Analytics, Meta Pixel, kein externes Marketing-Tracking).
-              </p>
-            </Section>
 
-            <Section title="4. Auftragsverarbeiter">
-              <p>
-                Soweit wir personenbezogene Daten an externe Dienstleister
-                übermitteln, geschieht dies ausschließlich auf Grundlage eines
-                Vertrags zur Auftragsverarbeitung nach Art. 28 DSGVO:
-              </p>
-              <div className="mt-4 space-y-4">
-                {c.processors.map((p) => (
-                  <div
-                    key={p.name}
-                    className="rounded-elo border border-borderLight bg-white p-4"
-                  >
-                    <p className="font-semibold text-navy">{p.name}</p>
-                    <p className="mt-1 text-[13.5px] text-slate">Zweck: {p.purpose}</p>
-                    <p className="mt-0.5 text-[13.5px] text-slate">Standort: {p.location}</p>
-                    <p className="mt-0.5 text-[13.5px] text-slate">Rechtsgrundlage: {p.basis}</p>
-                  </div>
-                ))}
-              </div>
-            </Section>
-
-            <Section title="5. Speicherdauer">
-              <ul className="list-disc list-outside ml-5 space-y-2">
-                <li>Lead-Daten: 36 Monate nach letztem Kontakt, danach Anonymisierung oder Löschung. Bei abgeschlossenen Verträgen: handels- und steuerrechtliche Aufbewahrungsfristen (i. d. R. 10 Jahre).</li>
-                <li>Newsletter-Daten: bis Widerruf, anschließend Löschung der Inhalte und Sperrung der E-Mail-Adresse zum Schutz vor erneutem Versand.</li>
-                <li>Server-Logfiles: 14 Tage.</li>
-                <li>Funktionale Cookies: gemäß Tabelle unter Punkt 3.</li>
-              </ul>
-            </Section>
-
-            <Section title="6. Empfänger">
-              <p>
-                Außerhalb der unter Punkt 4 genannten Auftragsverarbeiter geben wir
-                Ihre Daten nicht an Dritte weiter. Eine Weitergabe an einen konkreten
-                Energieversorger erfolgt ausschließlich dann, wenn Sie nach unserer
-                Beratung einen Vertragsabschluss ausdrücklich beauftragen.
-              </p>
-            </Section>
-
-            <Section title="7. Datenübermittlung in Drittländer">
-              <p>
-                Eine Übermittlung in Drittländer außerhalb der EU/EWR findet nur in
-                begrenztem Umfang im Rahmen unserer Auftragsverarbeiter statt
-                (s. Punkt 4). In diesen Fällen schützen wir Ihre Daten durch
-                EU-Standardvertragsklauseln (Art. 46 DSGVO) und – sofern verfügbar –
-                durch EU-Region-Selection.
-              </p>
-            </Section>
-
-            <Section title="8. Ihre Rechte">
-              <p>Sie haben das Recht auf:</p>
-              <ul className="list-disc list-outside ml-5 mt-3 space-y-1.5">
-                <li>Auskunft über die zu Ihrer Person gespeicherten Daten (Art. 15 DSGVO)</li>
-                <li>Berichtigung unrichtiger Daten (Art. 16 DSGVO)</li>
-                <li>Löschung Ihrer Daten (Art. 17 DSGVO)</li>
-                <li>Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
-                <li>Datenübertragbarkeit (Art. 20 DSGVO)</li>
-                <li>Widerspruch gegen die Verarbeitung (Art. 21 DSGVO), insbesondere bei Verarbeitung auf Grundlage berechtigter Interessen</li>
-                <li>Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO)</li>
-              </ul>
-              <p className="mt-4">
-                Zur Wahrnehmung Ihrer Rechte genügt eine formlose Mitteilung an{' '}
-                <a href={`mailto:${c.contactEmail}`} className="text-premiumBlue underline underline-offset-4">
-                  {c.contactEmail}
-                </a>
-                . Alternativ steht Ihnen unser{' '}
-                <Link
-                  href="/datenschutz/anfrage"
-                  className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen"
-                >
-                  Anfrage-Formular
-                </Link>{' '}
-                zur Verfügung.
-              </p>
-            </Section>
-
-            <Section title="9. Cookie-Einstellungen ändern">
-              <p>
-                Sie können Ihre Cookie-Einwilligung jederzeit zurückziehen. Klicken
-                Sie dazu im Footer auf „Cookie-Einstellungen" – der Banner wird neu
-                geladen und Sie können Ihre Auswahl ändern. Funktionale Cookies
-                (siehe Punkt 3) sind technisch erforderlich und werden auch nach
-                Ablehnung essentieller Cookies nicht gesetzt, wenn Sie die Seite
-                nicht aktiv nutzen.
-              </p>
-            </Section>
-
-            <Section title="10. Beschwerderecht bei der Aufsichtsbehörde">
-              <p>
-                Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu
-                beschweren (Art. 77 DSGVO). Eine Liste der zuständigen Behörden
-                finden Sie unter:{' '}
-                <a
-                  href="https://www.bfdi.bund.de/DE/Service/Anschriften/anschriften_table.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen"
-                >
-                  bfdi.bund.de
-                </a>
-                .
-              </p>
-            </Section>
-
-            <Section title="11. Änderungen dieser Datenschutzerklärung">
-              <p>
-                Wir behalten uns vor, diese Datenschutzerklärung anzupassen, wenn
-                sich die Rechtslage oder unsere Verarbeitungsprozesse ändern. Die
-                jeweils aktuelle Fassung finden Sie stets unter dieser URL.
-              </p>
-            </Section>
+              <nav
+                aria-label="Abschnitte der Datenschutzerklärung"
+                className="mt-4 max-h-[calc(100vh-var(--agi-header-row)-7rem)] overflow-auto rounded-eloLg border border-borderLight bg-white p-5 shadow-soft"
+              >
+                <h2 className="font-display text-[17px] font-semibold text-navy">
+                  Auf dieser Seite
+                </h2>
+                <ol className="mt-4 space-y-2.5 text-[13.5px] leading-snug">
+                  {sections.map((title, index) => (
+                    <li key={title}>
+                      <a
+                        href={`#${sectionId(index + 1, title)}`}
+                        className="text-slate underline-offset-4 hover:text-premiumBlue hover:underline"
+                      >
+                        {index + 1}. {title}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            </aside>
           </div>
         </section>
       </main>
@@ -266,24 +776,54 @@ export default function DatenschutzPage() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function LegalSection({
+  index,
+  title,
+  children,
+}: {
+  index: number;
+  title: string;
+  children: React.ReactNode;
+}) {
+  const id = sectionId(index, title);
   return (
-    <section>
-      <h2 className="font-display text-[20px] sm:text-[22px] font-semibold text-navy tracking-tight">
-        {title}
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-28">
+      <h2
+        id={`${id}-title`}
+        className="font-display text-[20px] font-semibold tracking-tight text-navy sm:text-[22px]"
+      >
+        {index}. {title}
       </h2>
-      <div className="mt-3 space-y-2">{children}</div>
+      <div className="mt-4 space-y-3">{children}</div>
     </section>
   );
 }
 
-function Row({ n, p, l, k }: { n: string; p: string; l: string; k: string }) {
+function Bullets({ items }: { items: string[] }) {
   return (
-    <tr>
-      <td className="p-3 font-mono text-[12.5px] text-navy">{n}</td>
-      <td className="p-3 text-slate">{p}</td>
-      <td className="p-3 text-slate whitespace-nowrap">{l}</td>
-      <td className="p-3 text-slate whitespace-nowrap">{k}</td>
-    </tr>
+    <ul className="ml-5 list-disc space-y-1.5">
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
   );
+}
+
+function Law({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-elo border border-borderLight bg-white px-4 py-3 text-[14px] text-navy">
+      {children}
+    </p>
+  );
+}
+
+function sectionId(index: number, title: string): string {
+  return `${index}-${title
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')}`;
 }

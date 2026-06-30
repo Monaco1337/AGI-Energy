@@ -15,7 +15,7 @@ import { Button, OptionCard, Field, Checkbox } from '@elo/ui';
 import { WizardInstantEstimate } from '@/components/funnel/WizardInstantEstimate';
 import { funnelConfig, visibleSteps } from '@/lib/funnel/config';
 import { audienceFromState } from '@/lib/funnel/audience';
-import { CONSENT_TEXTS, CONSENT_VERSION } from '@/lib/consent';
+import { CONSENT_TEXTS, CONSENT_VERSION, PRIVACY_POLICY_VERSION } from '@/lib/consent';
 import { submitLead } from '@/app/actions/submitLead';
 import type { AnswerState, FunnelStep, Interest } from '@elo/core';
 
@@ -37,6 +37,8 @@ function readUtmCookies() {
     utmSource: readCookie('agi_utm_source'),
     utmMedium: readCookie('agi_utm_medium'),
     utmCampaign: readCookie('agi_utm_campaign'),
+    utmTerm: readCookie('agi_utm_term'),
+    utmContent: readCookie('agi_utm_content'),
     referrer: readCookie('agi_referrer'),
   };
 }
@@ -127,16 +129,26 @@ export function EnergyCheckWizard() {
     if (!canNext) return;
     const elapsed = Date.now() - startedAt.current;
     const utm = readUtmCookies();
+    const technicalRequestId =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `agi-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const fd = new FormData();
     fd.set(
       'payload',
       JSON.stringify({
         state,
         consentTextVersion: CONSENT_VERSION,
+        privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+        consentTexts: CONSENT_TEXTS,
+        pagePath: window.location.pathname,
+        technicalRequestId,
         submittedAtMs: elapsed,
         ...(utm.utmSource ? { utmSource: utm.utmSource } : {}),
         ...(utm.utmMedium ? { utmMedium: utm.utmMedium } : {}),
         ...(utm.utmCampaign ? { utmCampaign: utm.utmCampaign } : {}),
+        ...(utm.utmTerm ? { utmTerm: utm.utmTerm } : {}),
+        ...(utm.utmContent ? { utmContent: utm.utmContent } : {}),
         ...(utm.referrer ? { referrer: utm.referrer } : {}),
       }),
     );
@@ -258,7 +270,7 @@ export function EnergyCheckWizard() {
               {isLast
                 ? isPending
                   ? 'Wird gesendet…'
-                  : 'Energie-Check absenden'
+                  : 'Kostenlose Energieprüfung anfragen'
                 : 'Weiter →'}
             </Button>
           </div>
@@ -290,7 +302,7 @@ export function EnergyCheckWizard() {
               {isLast
                 ? isPending
                   ? 'Wird gesendet…'
-                  : 'Absenden'
+                  : 'Anfragen'
                 : 'Weiter →'}
             </Button>
           </div>
@@ -442,7 +454,7 @@ function ContactFields({
         />
       </div>
       <p className="text-[12.5px] text-muted leading-snug">
-        Wir verwenden Ihre Daten ausschließlich zur Auswertung. Keine Weitergabe an Dritte.
+        Wir verwenden Ihre Daten zur Bearbeitung Ihrer Energieprüfungsanfrage.
       </p>
       {/* Honeypot */}
       <div className="elo-hp" aria-hidden>
@@ -467,36 +479,46 @@ function ConsentFields({
       <div className="rounded-eloLg border border-line bg-card p-5 sm:p-6">
         <div className="grid gap-4">
           <Checkbox
-            label={CONSENT_TEXTS.funnelContact}
-            checked={Boolean(state.contactConsent)}
-            onChange={(e) => setField('contactConsent', e.target.checked)}
-          />
-          <Checkbox
             label={
               <>
-                {CONSENT_TEXTS.funnelPrivacy}{' '}
+                Ich habe die{' '}
                 <Link
                   className="underline underline-offset-4"
                   href="/datenschutz"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  (Datenschutz)
+                  Datenschutzerklärung
                 </Link>
+                {' '}
+                gelesen und bin damit einverstanden, dass meine Angaben zur
+                Bearbeitung meiner Anfrage zur persönlichen Energieprüfung
+                verarbeitet werden. Mir ist bekannt, dass ich zur Bearbeitung
+                meiner Anfrage per Telefon oder E-Mail kontaktiert werden kann.
               </>
             }
             checked={Boolean(state.privacyAccepted)}
-            onChange={(e) => setField('privacyAccepted', e.target.checked)}
+            onChange={(e) => {
+              setField('privacyAccepted', e.target.checked);
+              setField('contactConsent', e.target.checked);
+            }}
+          />
+          <Checkbox
+            label={CONSENT_TEXTS.whatsapp}
+            checked={Boolean(state.whatsappConsent)}
+            onChange={(e) => setField('whatsappConsent', e.target.checked)}
           />
         </div>
       </div>
       <p className="text-[12.5px] text-muted leading-relaxed">
-        Sie können Ihre Einwilligung jederzeit widerrufen – per E-Mail oder über unser{' '}
+        Mit dem Absenden der Anfrage werden Ihre Angaben zur Bearbeitung Ihrer
+        Energieprüfungsanfrage verarbeitet. Weitere Informationen finden Sie in
+        unserer{' '}
         <Link
-          href="/datenschutz/anfrage"
+          href="/datenschutz"
           className="underline underline-offset-4 hover:text-ink"
         >
-          Auskunfts- &amp; Löschformular
+          Datenschutzerklärung
         </Link>
         .
       </p>

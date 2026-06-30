@@ -23,26 +23,26 @@ export const COMPANY_INFO = {
   /** Optional, separater Geschaeftsname (wenn anders als legalName) */
   tradingName: 'AGI Energy',
   /** Inhaber / Geschaeftsfuehrung */
-  responsiblePerson: 'Kevin Blazevic',
+  responsiblePerson: 'Jennifer Ast-Priluzki',
   /** Strasse + Hausnummer */
-  street: 'PLACEHOLDER_STRASSE_HAUSNUMMER',
+  street: 'Bertolt-Brecht-Str. 20',
   /** PLZ + Ort */
-  postalCity: 'PLACEHOLDER_PLZ_ORT',
+  postalCity: '59427 Unna',
   /** Land in ISO-Form */
   country: 'Deutschland',
   /** E-Mail fuer Kontakt + § 5 TMG */
-  contactEmail: 'kontakt@agienergy.de',
+  contactEmail: 'info@agienergy.de',
   /** Telefon fuer unmittelbare Kontaktmoeglichkeit */
-  contactPhone: 'PLACEHOLDER_TELEFON',
+  contactPhone: '0175 1556926',
   /** Optional: USt-IdNr. nach § 27a UStG */
-  vatId: 'PLACEHOLDER_USTID',
+  vatId: '',
   /** Optional: Handelsregister bei eingetragenen Unternehmen */
-  hrb: 'PLACEHOLDER_HRB',
-  registerCourt: 'PLACEHOLDER_AMTSGERICHT',
+  hrb: '',
+  registerCourt: '',
   /** Verantwortlich nach § 18 Abs. 2 MStV (Medienrecht / Inhaltlich Verantwortlicher) */
-  pressResponsible: 'Kevin Blazevic',
+  pressResponsible: 'Jennifer Ast-Priluzki',
   /** Stand der Rechtstexte */
-  lastUpdated: '2026-06-29',
+  lastUpdated: '2026-06-30',
   /** Auftragsverarbeiter laut Art. 28 DSGVO */
   processors: [
     {
