@@ -2,15 +2,25 @@ import { z } from 'zod';
 
 // Helfer: behandelt "" als undefined, damit optionale URL-/String-Vars
 // nicht an .url()-Validierung scheitern, wenn sie im .env leer stehen.
+const trim = z.preprocess(
+  (v) => (typeof v === 'string' ? v.trim() : v),
+  z.unknown(),
+);
 const emptyToUndef = z.preprocess(
-  (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+  (v) => {
+    if (typeof v === 'string') {
+      const t = v.trim();
+      return t === '' ? undefined : t;
+    }
+    return v;
+  },
   z.unknown(),
 );
 const optStr = emptyToUndef.pipe(z.string().optional());
 const optUrl = emptyToUndef.pipe(z.string().url().optional());
 
 const schema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: trim.pipe(z.enum(['development', 'test', 'production']).default('development')),
   NEXT_PUBLIC_SITE_URL: emptyToUndef.pipe(
     z
       .string()
@@ -22,7 +32,7 @@ const schema = z.object({
       ),
   ),
 
-  STORAGE_DRIVER: z.enum(['json', 'supabase', 'blob', 'postgres']).optional(),
+  STORAGE_DRIVER: trim.pipe(z.enum(['json', 'supabase', 'blob', 'postgres']).optional()),
   STORAGE_BLOB_PATHNAME: optStr,
   BLOB_READ_WRITE_TOKEN: optStr,
   SUPABASE_URL: optUrl,
@@ -38,17 +48,17 @@ const schema = z.object({
   NEXTAUTH_SECRET: emptyToUndef.pipe(z.string().min(16).default('dev-secret-change-me-32-chars-please')),
   NEXTAUTH_URL: emptyToUndef.pipe(z.string().url().default('http://localhost:3000')),
 
-  MAIL_DRIVER: z.enum(['console', 'resend', 'smtp']).default('console'),
+  MAIL_DRIVER: trim.pipe(z.enum(['console', 'resend', 'smtp']).default('console')),
   RESEND_API_KEY: optStr,
   MAIL_FROM: emptyToUndef.pipe(z.string().default('Energy Lead OS <noreply@example.com>')),
   SALES_INBOX_EMAIL: optStr,
 
   CRON_SECRET: emptyToUndef.pipe(z.string().default('dev-cron-secret')),
 
-  AI_ASSIST: z.enum(['on', 'off']).default('off'),
-  EXPERIMENTS_ENABLED: z.enum(['on', 'off']).default('on'),
+  AI_ASSIST: trim.pipe(z.enum(['on', 'off']).default('off')),
+  EXPERIMENTS_ENABLED: trim.pipe(z.enum(['on', 'off']).default('on')),
 
-  AI_PROVIDER: z.enum(['noop', 'mistral_eu', 'azure_openai_eu']).default('noop'),
+  AI_PROVIDER: trim.pipe(z.enum(['noop', 'mistral_eu', 'azure_openai_eu']).default('noop')),
   AI_API_KEY: optStr,
   AI_BASE_URL: optStr,
 
