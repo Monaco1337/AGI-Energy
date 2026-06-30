@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { newId, nowIso, hashIp } from '@elo/core';
+import { nowIso, hashIp } from '@elo/core';
 import { logAudit } from '@elo/audit';
 import { getStorage } from '@elo/storage';
 import { rateLimit, getClientKeyFromHeaders } from '@/lib/rateLimit';
@@ -95,6 +95,3 @@ export async function logoutAction(): Promise<void> {
   await clearSession();
   redirect('/admin/login');
 }
-
-// Re-Export für saubere Imports
-export { newId };

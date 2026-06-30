@@ -281,27 +281,28 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     /* Audit darf den Lead-Eingang nie blockieren. */
   }
 
-  // Mails: nur wenn nicht gesperrt
+  // Mails: nur wenn nicht gesperrt – darf den Lead-Eingang nie blockieren.
   if (lead.leadColor !== 'black') {
-    const mailer = getMailer();
-    if (lead.email) {
-      try {
-        await mailer.send(leadConfirmation(lead));
-      } catch {
-        /* nicht blockieren */
+    try {
+      const mailer = getMailer();
+      if (lead.email) {
+        try {
+          await mailer.send(leadConfirmation(lead));
+        } catch {
+          /* nicht blockieren */
+        }
       }
-    }
-    if (env.SALES_INBOX_EMAIL) {
-      try {
-        await mailer.send(salesNotification(lead, env.SALES_INBOX_EMAIL));
-      } catch {
-        /* nicht blockieren */
+      if (env.SALES_INBOX_EMAIL) {
+        try {
+          await mailer.send(salesNotification(lead, env.SALES_INBOX_EMAIL));
+        } catch {
+          /* nicht blockieren */
+        }
       }
+    } catch (err) {
+      console.error('[submitLead] mailer init failed', err);
     }
   }
 
   return { ok: true, leadId: id, referralCode: ownReferralCode };
 }
-
-// Re-export für sicheres Imports
-export { CONSENT_TEXT, CONSENT_TEXT_VERSION };
