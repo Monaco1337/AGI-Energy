@@ -11,6 +11,7 @@ import {
   setPartnerLoginPolicyAction,
   resetPartnerPasswordAction,
   unlockPartnerLoginAction,
+  createPartnerLoginAction,
 } from '@/app/actions/partnerMutations';
 import { ConfirmSubmit } from '@/components/agi/shared/ConfirmSubmit';
 
@@ -27,9 +28,16 @@ function fmtEur(v: number): string {
   return v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 }
 
-export default async function PartnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PartnerDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ newUsername?: string; newPassword?: string }>;
+}) {
   await requireRole(['admin', 'sales']);
   const { id } = await params;
+  const { newUsername, newPassword } = await searchParams;
   const storage = getStorage();
   const partner = await storage.getPartner(id as PartnerId);
   if (!partner) notFound();
@@ -160,6 +168,26 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
         <aside className="space-y-5">
           <div>
             <h2 className="font-display text-[18px] text-[var(--ops-text)] mb-3">Login-Konto</h2>
+
+            {newUsername && newPassword && (
+              <div className="ops-card mb-3 p-4 space-y-2 border border-[var(--ops-gold)]/40 bg-[var(--ops-gold)]/[0.06]">
+                <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--ops-gold)] font-semibold">
+                  Zugangsdaten – jetzt notieren
+                </div>
+                <p className="text-[12px] text-[var(--ops-text-2)] leading-snug">
+                  Dieses Passwort wird nur einmal angezeigt und nirgends im Klartext gespeichert. Bitte
+                  jetzt sicher an den Partner weitergeben (z. B. persönlich oder verschlüsselt). Beim
+                  ersten Login muss ein eigenes Passwort vergeben werden.
+                </p>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13.5px] pt-1">
+                  <span className="text-[var(--ops-text-2)]">Benutzername</span>
+                  <span className="font-mono text-[var(--ops-text)]">@{newUsername}</span>
+                  <span className="text-[var(--ops-text-2)]">Passwort</span>
+                  <span className="font-mono text-[var(--ops-text)]">{newPassword}</span>
+                </div>
+              </div>
+            )}
+
             {loginUser ? (
               <div className="ops-card p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -243,8 +271,22 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
                 </div>
               </div>
             ) : (
-              <div className="ops-card p-4 text-[13px] text-[var(--ops-text-2)]">
-                Kein Login-Konto verknüpft.
+              <div className="ops-card p-4 space-y-3">
+                <p className="text-[13px] text-[var(--ops-text-2)] leading-snug">
+                  Kein Login-Konto verknüpft. Ohne Konto kann sich dieser Partner nicht im Portal
+                  anmelden.
+                </p>
+                <form action={createPartnerLoginAction}>
+                  <input type="hidden" name="id" value={partner.id} />
+                  <input
+                    type="hidden"
+                    name="redirectTo"
+                    value={`/admin/vertriebspartner/${partner.id}`}
+                  />
+                  <button className="ops-cta h-9 px-4 rounded-lg text-[12.5px]">
+                    Login-Konto anlegen
+                  </button>
+                </form>
               </div>
             )}
           </div>

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { newId, nowIso } from '@elo/core';
-import type { Partner, PartnerId, PartnerSpecialty, PartnerStatus } from '@elo/core';
+import type { Partner, PartnerId, PartnerSpecialty, PartnerStatus, UserId } from '@elo/core';
 import type { AdminUser } from '@elo/core';
 import { getStorage } from '@elo/storage';
 import type { StorageAdapter } from '@elo/storage';
@@ -97,8 +97,13 @@ export async function upsertPartnerAction(formData: FormData): Promise<void> {
       });
     }
   } else {
+    const partnerId = newId('prt') as PartnerId;
+    const userId = newId('usr') as UserId;
+    const username = await generateUniqueUsername(storage, parsed.name);
+    const password = generateInitialPassword();
+
     const partner: Partner = {
-      id: newId('prt') as PartnerId,
+      id: partnerId,
       createdAt: nowIso(),
       updatedAt: nowIso(),
       name: parsed.name,
@@ -110,14 +115,37 @@ export async function upsertPartnerAction(formData: FormData): Promise<void> {
       capacity: parsed.capacity,
       routingWeight: parsed.routingWeight,
       status: parsed.status,
+      userId,
     };
     await storage.createPartner(partner);
+
+    // Jeder neue Partner bekommt sofort ein Login-Konto – ohne das kann
+    // er sich nicht im Portal anmelden (das war zuvor eine Lücke).
+    const user: AdminUser = {
+      id: userId,
+      username,
+      name: parsed.name,
+      email: parsed.email.toLowerCase(),
+      role: 'partner',
+      passwordHash: await hashPassword(password),
+      createdAt: nowIso(),
+      failedLoginCount: 0,
+      mustChangePassword: true,
+      partnerId,
+    };
+    await storage.upsertUser(user);
+
     await logAudit({
       ctx: { actorId: session.userId, actorRole: session.role },
       action: 'partner.created',
       entity: 'partner',
       entityId: partner.id,
     });
+
+    revalidatePath('/admin', 'layout');
+    redirect(
+      `/admin/vertriebspartner/${partnerId}?newUsername=${encodeURIComponent(username)}&newPassword=${encodeURIComponent(password)}`,
+    );
   }
 
   revalidatePath('/admin', 'layout');
@@ -166,6 +194,113 @@ async function resolvePartnerUser(
   }
   const users = await storage.listUsers();
   return users.find((u) => u.partnerId === partner.id) ?? null;
+}
+
+function slugifyUsernamePart(part: string): string {
+  return part
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+/** Erzeugt "vorname.nachname" aus dem Partnernamen (gleiches Muster wie die Seed-Konten). */
+function baseUsernameFromName(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(slugifyUsernamePart)
+    .filter(Boolean);
+  if (parts.length >= 2) return `${parts[0]}.${parts[parts.length - 1]}`;
+  if (parts.length === 1) return parts[0] ?? 'partner';
+  return 'partner';
+}
+
+async function generateUniqueUsername(storage: StorageAdapter, name: string): Promise<string> {
+  const base = baseUsernameFromName(name) || 'partner';
+  let candidate = base;
+  let attempt = 2;
+  while (await storage.getUserByUsername(candidate)) {
+    candidate = `${base}${attempt}`;
+    attempt += 1;
+  }
+  return candidate;
+}
+
+/** Kurzes, gut lesbares Einmal-Passwort (keine Verwechslungszeichen wie 0/O, 1/l). */
+function generateInitialPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let out = '';
+  for (let i = 0; i < 10; i += 1) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `Agi-${out}!`;
+}
+
+const createLoginSchema = z.object({
+  id: z.string().min(1),
+  redirectTo: z.string().optional(),
+});
+
+/**
+ * Admin: legt für einen Partner ohne Login-Konto ein neues Konto an
+ * (generierter Benutzername + zufälliges Einmal-Passwort, Erst-Login-Pflicht aktiv).
+ * Die Zugangsdaten werden einmalig über die Redirect-URL an die Detailseite
+ * durchgereicht und dort angezeigt – sie werden nirgends im Klartext gespeichert.
+ */
+export async function createPartnerLoginAction(formData: FormData): Promise<void> {
+  const parsed = createLoginSchema.parse({
+    id: formData.get('id'),
+    redirectTo: (formData.get('redirectTo') as string) || undefined,
+  });
+  const session = await requireSession();
+  if (!isAdminRole(session.role)) throw new Error('Nur Admin.');
+  const storage = getStorage();
+  const partner = await storage.getPartner(parsed.id as PartnerId);
+  if (!partner) throw new Error('Partner nicht gefunden.');
+
+  const existing = await resolvePartnerUser(storage, partner);
+  if (existing) throw new Error('Für diesen Partner existiert bereits ein Login-Konto.');
+
+  const username = await generateUniqueUsername(storage, partner.name);
+  const password = generateInitialPassword();
+  const userId = newId('usr') as UserId;
+
+  const user: AdminUser = {
+    id: userId,
+    username,
+    name: partner.name,
+    email: partner.email,
+    role: 'partner',
+    passwordHash: await hashPassword(password),
+    createdAt: nowIso(),
+    failedLoginCount: 0,
+    mustChangePassword: true,
+    partnerId: partner.id,
+  };
+  await storage.upsertUser(user);
+  if (!partner.userId) {
+    await storage.updatePartner(partner.id, { userId });
+  }
+
+  await logAudit({
+    ctx: { actorId: session.userId, actorRole: session.role },
+    action: 'settings.updated',
+    entity: 'user',
+    entityId: userId,
+  });
+
+  revalidatePath('/admin', 'layout');
+  const base = parsed.redirectTo ?? `/admin/vertriebspartner/${partner.id}`;
+  const sep = base.includes('?') ? '&' : '?';
+  redirect(
+    `${base}${sep}newUsername=${encodeURIComponent(username)}&newPassword=${encodeURIComponent(password)}`,
+  );
 }
 
 const loginPolicySchema = z.object({
