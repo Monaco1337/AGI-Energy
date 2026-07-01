@@ -149,6 +149,25 @@ export interface LeadFile {
   category: 'invoice' | 'offer' | 'contract' | 'other';
 }
 
+/**
+ * Status des transaktionalen Mailversands für einen Lead
+ * (Bestätigung an den Interessenten + interne Benachrichtigung).
+ * Dient zugleich als Idempotenz-Marker: ist `confirmationSentAt` bzw.
+ * `internalSentAt` gesetzt, wird bei einem Retry nicht erneut gesendet.
+ */
+export interface LeadEmailStatus {
+  /** Mail-Provider, über den versendet wurde (z. B. "resend"). */
+  provider?: string;
+  /** ISO-Zeitpunkt des erfolgreichen Versands der Kundenbestätigung. */
+  confirmationSentAt?: string;
+  /** Fehlermeldung, falls die Kundenbestätigung fehlschlug. */
+  confirmationError?: string;
+  /** ISO-Zeitpunkt des erfolgreichen Versands der internen Benachrichtigung. */
+  internalSentAt?: string;
+  /** Fehlermeldung, falls die interne Benachrichtigung fehlschlug. */
+  internalError?: string;
+}
+
 export interface Lead {
   id: LeadId;
   createdAt: string;
@@ -219,6 +238,9 @@ export interface Lead {
   notes: Note[];
   contactHistory: ContactEvent[];
   files: LeadFile[];
+
+  /** Status des transaktionalen Mailversands (Bestätigung + interne Benachrichtigung). */
+  emailStatus?: LeadEmailStatus;
 
   // optional, von AI-Assist befüllt – klar gekennzeichnet
   aiOptIn?: boolean;

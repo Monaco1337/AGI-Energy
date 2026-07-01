@@ -17,6 +17,7 @@ import {
 } from '@elo/core';
 import { getStorage } from '@elo/storage';
 import { scoreLead } from '@elo/scoring';
+import { sendLeadEmails } from '@elo/mail';
 import { rateLimit, getClientKeyFromHeaders } from '@/lib/rateLimit';
 import { env } from '@/lib/env';
 
@@ -256,6 +257,23 @@ export async function POST(req: Request) {
       { ok: false, error: 'Speichern fehlgeschlagen. Bitte später erneut.' },
       { status: 500 },
     );
+  }
+
+  // Transaktionale Mails (Bestätigung + interne Benachrichtigung).
+  // Darf die Antwort niemals blockieren – der Lead ist bereits gespeichert.
+  if (lead.leadColor !== 'black') {
+    try {
+      const emailStatus = await sendLeadEmails(lead, env.NEXT_PUBLIC_SITE_URL);
+      if (emailStatus) {
+        try {
+          await storage.updateLead(id, { emailStatus });
+        } catch (persistErr) {
+          console.error('[api/leads] persist emailStatus failed', persistErr);
+        }
+      }
+    } catch (err) {
+      console.error('[api/leads] sendLeadEmails failed', err);
+    }
   }
 
   return NextResponse.json({ ok: true, id, referralCode: ownReferralCode });

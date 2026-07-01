@@ -68,7 +68,7 @@ export default function DatenschutzPage() {
             </p>
             <h1 className="mt-3 font-display text-[32px] font-semibold leading-[1.08] tracking-tight text-navy sm:text-[42px]">
               Datenschutzerklärung
-            </h1>
+        </h1>
             <p className="mt-4 max-w-3xl text-[15.5px] leading-relaxed text-slate">
               Informationen zur Verarbeitung personenbezogener Daten bei der
               Nutzung der Website, bei Energieprüfungsanfragen, Rückruf,
@@ -514,8 +514,8 @@ export default function DatenschutzPage() {
                   <Link href="/cookie-richtlinie" className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
                     Cookie-Richtlinie
                   </Link>
-                  .
-                </p>
+            .
+          </p>
               </LegalSection>
 
               <LegalSection index={19} title="Analyse, Tracking und Marketingtechnologien">
@@ -744,8 +744,8 @@ export default function DatenschutzPage() {
                   <a href={`tel:${c.contactPhone.replace(/\s+/g, '')}`} className="text-premiumBlue underline underline-offset-4 hover:text-energyGreen">
                     {c.contactPhone}
                   </a>
-                </p>
-              </div>
+          </p>
+        </div>
 
               <nav
                 aria-label="Abschnitte der Datenschutzerklärung"

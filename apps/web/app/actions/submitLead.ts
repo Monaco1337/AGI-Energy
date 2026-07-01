@@ -18,7 +18,7 @@ import {
 import { scoreLead } from '@elo/scoring';
 import { getStorage } from '@elo/storage';
 import { logAudit } from '@elo/audit';
-import { getMailer, leadConfirmation, salesNotification } from '@elo/mail';
+import { sendLeadEmails } from '@elo/mail';
 import { rateLimit, getClientKeyFromHeaders } from '@/lib/rateLimit';
 import { isLikelyDisposableEmail, looksLikeBotSubmit } from '@/lib/security';
 import { env } from '@/lib/env';
@@ -281,26 +281,20 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     /* Audit darf den Lead-Eingang nie blockieren. */
   }
 
-  // Mails: nur wenn nicht gesperrt – darf den Lead-Eingang nie blockieren.
+  // Transaktionale Mails: nur wenn nicht gesperrt. Darf den Lead-Eingang
+  // niemals blockieren – der Lead ist bereits gespeichert.
   if (lead.leadColor !== 'black') {
     try {
-      const mailer = getMailer();
-      if (lead.email) {
+      const emailStatus = await sendLeadEmails(lead, env.NEXT_PUBLIC_SITE_URL);
+      if (emailStatus) {
         try {
-          await mailer.send(leadConfirmation(lead));
-        } catch {
-          /* nicht blockieren */
-        }
-      }
-      if (env.SALES_INBOX_EMAIL) {
-        try {
-          await mailer.send(salesNotification(lead, env.SALES_INBOX_EMAIL));
-        } catch {
-          /* nicht blockieren */
+          await storage.updateLead(id, { emailStatus });
+        } catch (persistErr) {
+          console.error('[submitLead] persist emailStatus failed', persistErr);
         }
       }
     } catch (err) {
-      console.error('[submitLead] mailer init failed', err);
+      console.error('[submitLead] sendLeadEmails failed', err);
     }
   }
 

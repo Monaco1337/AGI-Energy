@@ -49,8 +49,16 @@ const schema = z.object({
   NEXTAUTH_URL: emptyToUndef.pipe(z.string().url().default('http://localhost:3000')),
 
   MAIL_DRIVER: trim.pipe(z.enum(['console', 'resend', 'smtp']).default('console')),
+  /** Aktiviert den transaktionalen Mailversand (Lead-Bestätigung + intern). */
+  MAIL_ENABLED: trim.pipe(z.enum(['true', 'false']).default('false')),
+  /** Mail-Provider für Lead-Mails ("resend" nutzt die Resend-API). */
+  MAIL_PROVIDER: trim.pipe(z.enum(['console', 'resend']).default('console')),
   RESEND_API_KEY: optStr,
   MAIL_FROM: emptyToUndef.pipe(z.string().default('Energy Lead OS <noreply@example.com>')),
+  /** Antwortadresse der Lead-Mails, z. B. info@agienergy.de. */
+  MAIL_REPLY_TO: optStr,
+  /** Empfänger der internen Lead-Benachrichtigung. */
+  MAIL_INTERNAL_TO: optStr,
   SALES_INBOX_EMAIL: optStr,
 
   CRON_SECRET: emptyToUndef.pipe(z.string().default('dev-cron-secret')),

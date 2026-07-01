@@ -6,4 +6,7 @@ export {
   followUpReminder,
   newsletterConfirm,
   newsletterWelcome,
+  leadConfirmationMessage,
+  internalLeadMessage,
 } from './templates';
+export { sendLeadEmails } from './leadEmails';
