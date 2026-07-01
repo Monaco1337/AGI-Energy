@@ -51,6 +51,8 @@ export interface SubmitResult {
   leadId?: string;
   /** Persoenlicher Empfehlungscode des soeben angelegten Leads. */
   referralCode?: string;
+  /** Status der Kundenbestätigungsmail – nur "sent", wenn wirklich versendet. */
+  confirmationEmailStatus?: 'sent' | 'unsent';
 }
 
 function asInterest(v: unknown): LeadFunnelInput['interests'] {
@@ -283,10 +285,12 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
 
   // Transaktionale Mails: nur wenn nicht gesperrt. Darf den Lead-Eingang
   // niemals blockieren – der Lead ist bereits gespeichert.
+  let confirmationEmailStatus: 'sent' | 'unsent' = 'unsent';
   if (lead.leadColor !== 'black') {
     try {
       const emailStatus = await sendLeadEmails(lead, env.NEXT_PUBLIC_SITE_URL);
       if (emailStatus) {
+        if (emailStatus.confirmationSentAt) confirmationEmailStatus = 'sent';
         try {
           await storage.updateLead(id, { emailStatus });
         } catch (persistErr) {
@@ -298,5 +302,5 @@ export async function submitLead(formData: FormData): Promise<SubmitResult> {
     }
   }
 
-  return { ok: true, leadId: id, referralCode: ownReferralCode };
+  return { ok: true, leadId: id, referralCode: ownReferralCode, confirmationEmailStatus };
 }

@@ -22,13 +22,20 @@ function normalizeCode(raw: string | undefined): string | undefined {
   return upper;
 }
 
+const TRUST_POINTS = [
+  'Individuelle Prüfung Ihrer Angaben',
+  'Keine pauschalen Sparversprechen',
+  'Persönliche Rückmeldung durch einen Ansprechpartner',
+];
+
 export default async function DankePage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string }>;
+  searchParams: Promise<{ ref?: string; mail?: string }>;
 }) {
-  const { ref } = await searchParams;
+  const { ref, mail } = await searchParams;
   const code = normalizeCode(ref);
+  const mailConfirmed = mail === 'sent';
 
   return (
     <>
@@ -39,20 +46,30 @@ export default async function DankePage({
           <div className="rounded-xl3 border border-white/15 bg-white/[0.08] backdrop-blur-md shadow-premium p-8 sm:p-12 text-center">
             <p className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-energyGreen font-semibold mb-4">
               <span className="size-1.5 rounded-full bg-energyGreen" aria-hidden />
-              Übermittelt
+              Anfrage übermittelt
             </p>
             <h1 className="font-display text-[28px] sm:text-[36px] font-bold leading-tight text-softWhite">
-              Danke. Ihr Energie-Check wurde übermittelt.
+              Vielen Dank. Ihre Anfrage ist eingegangen.
             </h1>
-            <p className="mt-4 text-[17px] text-softWhite/75 leading-relaxed">
-              Ihre Angaben werden geprüft. Wir melden uns mit einer passenden Einschätzung – persönlich und ohne
-              Verkaufsdruck.
+            <p className="mt-4 text-[16px] sm:text-[17px] text-softWhite/75 leading-relaxed">
+              Ihre Angaben zur persönlichen Energieprüfung wurden erfolgreich übermittelt. Wir prüfen Ihre
+              Anfrage sorgfältig und melden uns zeitnah mit einer passenden Einschätzung bei Ihnen.
             </p>
-            <ul className="mt-6 space-y-2 text-[15px] text-softWhite/70 text-left max-w-md mx-auto">
-              <li>• Keine pauschalen Sparversprechen.</li>
-              <li>• Individuelle Prüfung Ihrer Angaben.</li>
-              <li>• Widerruf Ihrer Einwilligung jederzeit möglich.</li>
+            <p className="mt-3 text-[15px] text-softWhite/60 leading-relaxed">
+              {mailConfirmed
+                ? 'Wir haben Ihnen zusätzlich eine Bestätigung per E-Mail gesendet.'
+                : 'Falls Sie eine E-Mail-Adresse angegeben haben, erhalten Sie zusätzlich eine Bestätigung per E-Mail.'}
+            </p>
+
+            <ul className="mt-7 space-y-2.5 text-[15px] text-softWhite/75 text-left max-w-md mx-auto">
+              {TRUST_POINTS.map((point) => (
+                <li key={point} className="flex items-start gap-2.5">
+                  <CheckIcon />
+                  <span>{point}</span>
+                </li>
+              ))}
             </ul>
+
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/" className={cn(btnPrimary)}>
                 Zur Startseite
@@ -68,5 +85,26 @@ export default async function DankePage({
       </main>
       <Footer />
     </>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      className="mt-0.5 shrink-0 text-energyGreen"
+    >
+      <path
+        d="M20 6L9 17l-5-5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

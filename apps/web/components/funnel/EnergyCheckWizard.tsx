@@ -185,8 +185,11 @@ export function EnergyCheckWizard() {
         const res = await submitLead(fd);
         if (res.ok) {
           sessionStorage.removeItem(STORAGE_KEY);
-          const qs = res.referralCode ? `?ref=${encodeURIComponent(res.referralCode)}` : '';
-          router.push(`/danke${qs}`);
+          const params = new URLSearchParams();
+          if (res.referralCode) params.set('ref', res.referralCode);
+          if (res.confirmationEmailStatus === 'sent') params.set('mail', 'sent');
+          const qs = params.toString();
+          router.push(`/danke${qs ? `?${qs}` : ''}`);
         } else {
           setError(res.error ?? 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.');
         }

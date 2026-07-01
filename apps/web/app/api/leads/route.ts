@@ -261,10 +261,12 @@ export async function POST(req: Request) {
 
   // Transaktionale Mails (Bestätigung + interne Benachrichtigung).
   // Darf die Antwort niemals blockieren – der Lead ist bereits gespeichert.
+  let confirmationEmailStatus: 'sent' | 'unsent' = 'unsent';
   if (lead.leadColor !== 'black') {
     try {
       const emailStatus = await sendLeadEmails(lead, env.NEXT_PUBLIC_SITE_URL);
       if (emailStatus) {
+        if (emailStatus.confirmationSentAt) confirmationEmailStatus = 'sent';
         try {
           await storage.updateLead(id, { emailStatus });
         } catch (persistErr) {
@@ -276,5 +278,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, id, referralCode: ownReferralCode });
+  return NextResponse.json({ ok: true, id, referralCode: ownReferralCode, confirmationEmailStatus });
 }

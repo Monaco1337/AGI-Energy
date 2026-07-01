@@ -1,5 +1,10 @@
 import type { Lead, Subscriber } from '@elo/core';
 import type { MailMessage } from './types';
+import { getTimeBasedGreeting } from './greeting';
+
+function referralUrlFor(code: string, siteUrl: string): string {
+  return `${siteUrl.replace(/\/$/, '')}/empfehlung/${code}`;
+}
 
 const wrap = (title: string, body: string): string => `
 <!doctype html>
@@ -174,37 +179,81 @@ const AGI_FOOTER_HTML = `
 /**
  * Kunden-Bestätigungsmail nach Eingang einer Energieprüfungsanfrage.
  * Transaktional (Art. 6 Abs. 1 lit. b DSGVO) – kein Newsletter.
+ *
+ * Enthält den persönlichen Empfehlungscode nur, wenn `lead.referralCode`
+ * vorhanden ist. Die Anrede ist tageszeit- und datenabhängig.
  */
-export function leadConfirmationMessage(lead: Lead): MailMessage {
+export function leadConfirmationMessage(lead: Lead, siteUrl: string): MailMessage {
   const to = lead.email ?? '';
   const subject = 'Ihre Anfrage zur persönlichen Energieprüfung ist eingegangen';
 
-  const body = `Vielen Dank für Ihre Anfrage zur persönlichen Energieprüfung bei AGI Energy.
+  const greeting = getTimeBasedGreeting({
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+  });
+
+  const code = lead.referralCode?.trim();
+  const referralUrl = code ? referralUrlFor(code, siteUrl) : undefined;
+
+  // ── Plain-Text ──
+  const referralText =
+    code && referralUrl
+      ? `
+
+Ihr persönlicher Empfehlungscode
+
+Falls Sie AGI Energy weiterempfehlen möchten, können Sie folgenden Empfehlungscode weitergeben:
+
+${code}
+
+Oder nutzen Sie direkt Ihren persönlichen Empfehlungslink:
+
+${referralUrl}
+
+Jede Person, die über Ihren Link einen Energie-Check startet, erhält ebenfalls eine persönliche Prüfung. Eine Kontaktaufnahme erfolgt nur auf Grundlage der übermittelten Anfrage und der erteilten Einwilligungen.`
+      : '';
+
+  const text = `${greeting}
+
+vielen Dank für Ihre Anfrage zur persönlichen Energieprüfung bei AGI Energy.
 
 Wir haben Ihre Angaben erhalten und prüfen diese sorgfältig. Ein persönlicher Ansprechpartner meldet sich zeitnah bei Ihnen, um die nächsten Schritte zu besprechen.
 
 Je nach Anfrage kann es dabei um Strom, Gas, Photovoltaik, Anbieterwechsel, Jahresabrechnung, Verbrauchsoptimierung oder Gewerbeenergie gehen.
 
-Bitte beachten Sie: Konkrete Angebote, Einsparpotenziale und Empfehlungen hängen immer vom jeweiligen Einzelfall, Ihrem Standort, Ihrem Verbrauchsprofil, bestehenden Vertragsverhältnissen und den verfügbaren Marktbedingungen ab.
+Bitte beachten Sie: Konkrete Angebote, Einsparpotenziale und Empfehlungen hängen immer vom jeweiligen Einzelfall, Ihrem Standort, Ihrem Verbrauchsprofil, bestehenden Vertragsverhältnissen und den verfügbaren Marktbedingungen ab.${referralText}
 
 Wenn Sie Rückfragen haben, können Sie einfach auf diese E-Mail antworten.
 
 Freundliche Grüße
-Ihr AGI Energy Team`;
-
-  const text = `${body}
+Ihr AGI Energy Team
 
 —
 ${AGI_FOOTER_TEXT}`;
 
+  // ── HTML ──
+  const referralHtml =
+    code && referralUrl
+      ? `<div style="margin-top:24px;padding:20px;border:1px solid #e8e2d4;border-radius:12px;background:#faf8f2;">
+           <h2 style="font-size:15px;margin:0 0 10px 0;color:#1a1a1a;font-weight:600;">Ihr persönlicher Empfehlungscode</h2>
+           <p style="margin:0 0 12px 0;">Falls Sie AGI Energy weiterempfehlen möchten, können Sie folgenden Empfehlungscode weitergeben:</p>
+           <p style="margin:0 0 12px 0;font-family:monospace;font-size:20px;letter-spacing:3px;color:#1a1a1a;font-weight:700;">${escape(code)}</p>
+           <p style="margin:0 0 6px 0;">Oder nutzen Sie direkt Ihren persönlichen Empfehlungslink:</p>
+           <p style="margin:0 0 12px 0;"><a href="${referralUrl}" style="color:#1a6f6a;">${escape(referralUrl)}</a></p>
+           <p style="margin:0;font-size:12px;color:#6b6b6b;">Jede Person, die über Ihren Link einen Energie-Check startet, erhält ebenfalls eine persönliche Prüfung. Eine Kontaktaufnahme erfolgt nur auf Grundlage der übermittelten Anfrage und der erteilten Einwilligungen.</p>
+         </div>`
+      : '';
+
   const html = wrap(
     'Ihre Anfrage ist eingegangen',
-    `<p>Vielen Dank für Ihre Anfrage zur persönlichen Energieprüfung bei AGI Energy.</p>
+    `<p>${escape(greeting)}</p>
+     <p>vielen Dank für Ihre Anfrage zur persönlichen Energieprüfung bei AGI Energy.</p>
      <p>Wir haben Ihre Angaben erhalten und prüfen diese sorgfältig. Ein persönlicher Ansprechpartner meldet sich zeitnah bei Ihnen, um die nächsten Schritte zu besprechen.</p>
      <p>Je nach Anfrage kann es dabei um Strom, Gas, Photovoltaik, Anbieterwechsel, Jahresabrechnung, Verbrauchsoptimierung oder Gewerbeenergie gehen.</p>
      <p style="font-size:13px;color:#4b4b4b;">Bitte beachten Sie: Konkrete Angebote, Einsparpotenziale und Empfehlungen hängen immer vom jeweiligen Einzelfall, Ihrem Standort, Ihrem Verbrauchsprofil, bestehenden Vertragsverhältnissen und den verfügbaren Marktbedingungen ab.</p>
-     <p>Wenn Sie Rückfragen haben, können Sie einfach auf diese E-Mail antworten.</p>
-     <p style="margin-top:24px;">Freundliche Grüße<br/>Ihr AGI Energy Team</p>
+     ${referralHtml}
+     <p style="margin-top:24px;">Wenn Sie Rückfragen haben, können Sie einfach auf diese E-Mail antworten.</p>
+     <p style="margin-top:16px;">Freundliche Grüße<br/>Ihr AGI Energy Team</p>
      ${AGI_FOOTER_HTML}`,
   );
 
@@ -229,7 +278,12 @@ export function internalLeadMessage(lead: Lead, siteUrl: string): MailMessage {
   const region = [lead.postalCode, lead.city].filter(Boolean).join(' ') || '—';
   const interests =
     lead.interests.map((i) => INTEREST_LABEL_MAIL[i] ?? i).join(', ') || '—';
+  const code = lead.referralCode?.trim();
+  const referralUrl = code ? referralUrlFor(code, siteUrl) : undefined;
   const subject = 'Neue Energieprüfungsanfrage über AGI Energy';
+
+  const referralText =
+    code && referralUrl ? `\nEmpfehlungscode: ${code}\nEmpfehlungslink: ${referralUrl}` : '';
 
   const text = `Es ist eine neue Energieprüfungsanfrage eingegangen.
 
@@ -237,12 +291,18 @@ Bereich:   ${interests}
 Region:    ${region}
 Bewertung: ${lead.leadLabel} (Score ${lead.leadScore})
 Rechnung:  ${lead.files.length > 0 ? 'liegt vor' : 'nicht angehängt'}
-Eingang:   ${new Date(lead.createdAt).toLocaleString('de-DE')}
+Eingang:   ${new Date(lead.createdAt).toLocaleString('de-DE')}${referralText}
 
 Alle Details (Kontaktdaten, Unterlagen, Verlauf) im Admin-Cockpit:
 ${adminUrl}
 
 — Automatische Benachrichtigung, AGI Energy`;
+
+  const referralRows =
+    code && referralUrl
+      ? `<tr><td style="padding:4px 16px 4px 0;color:#6b6b6b;">Empfehlungscode</td><td style="padding:4px 0;color:#1a1a1a;font-family:monospace;">${escape(code)}</td></tr>
+         <tr><td style="padding:4px 16px 4px 0;color:#6b6b6b;">Empfehlungslink</td><td style="padding:4px 0;"><a href="${referralUrl}" style="color:#1a6f6a;">${escape(referralUrl)}</a></td></tr>`
+      : '';
 
   const html = wrap(
     'Neue Energieprüfungsanfrage',
@@ -253,6 +313,7 @@ ${adminUrl}
        <tr><td style="padding:4px 16px 4px 0;color:#6b6b6b;">Bewertung</td><td style="padding:4px 0;color:#1a1a1a;">${escape(lead.leadLabel)} (Score ${lead.leadScore})</td></tr>
        <tr><td style="padding:4px 16px 4px 0;color:#6b6b6b;">Rechnung</td><td style="padding:4px 0;color:#1a1a1a;">${lead.files.length > 0 ? 'liegt vor' : 'nicht angehängt'}</td></tr>
        <tr><td style="padding:4px 16px 4px 0;color:#6b6b6b;">Eingang</td><td style="padding:4px 0;color:#1a1a1a;">${escape(new Date(lead.createdAt).toLocaleString('de-DE'))}</td></tr>
+       ${referralRows}
      </table>
      <p style="text-align:center;margin:24px 0;">
        <a href="${adminUrl}" style="display:inline-block;background:#1a1a1a;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:600;">Im Admin öffnen</a>

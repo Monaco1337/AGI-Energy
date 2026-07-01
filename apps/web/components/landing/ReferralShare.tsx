@@ -3,119 +3,130 @@
 import { useState } from 'react';
 
 interface Props {
-  /** 8-stelliger Empfehlungscode des Leads. */
+  /** Empfehlungscode des Leads (ohne Leerzeichen, serverseitig erzeugt). */
   code: string;
-  /** Site-URL als absolute Basis fuer Sharing-Links (ohne trailing slash). */
+  /** Site-URL als absolute Basis für den Empfehlungslink (ohne trailing slash). */
   siteUrl: string;
-  /** Vorname zur Personalisierung. Optional. */
-  firstName?: string;
 }
 
-/**
- * Zeigt den persoenlichen Empfehlungscode + Share-Buttons (WhatsApp, E-Mail, Copy).
- * Eingebettet auf der Danke-Seite, um das Empfehlungssystem ab Lead 1 zu aktivieren.
- */
-export default function ReferralShare({ code, siteUrl, firstName }: Props) {
-  const [copied, setCopied] = useState(false);
-  const url = `${siteUrl}/empfehlung/${code}`;
-  const personal = firstName ? ` von ${firstName}` : '';
-  const shareTitle = 'AGI Energy: persönlicher Energie-Check';
-  const shareText = `Ich habe gerade meinen Energie-Check bei AGI Energy gemacht. Wenn du auch wissen willst, ob bei Strom, Gas oder PV etwas zu holen ist - mit dieser Empfehlung${personal} bekommst du auch eine persönliche Prüfung: ${url}`;
+type Copied = 'idle' | 'url' | 'code';
 
-  async function copy() {
+/**
+ * Seriöse Empfehlungskarte auf der Danke-Seite.
+ * Teilt ausschließlich den Empfehlungscode und den Empfehlungslink –
+ * niemals personenbezogene Lead-Daten. Kein WhatsApp-Sharing.
+ */
+export default function ReferralShare({ code, siteUrl }: Props) {
+  const [copied, setCopied] = useState<Copied>('idle');
+  const [status, setStatus] = useState('');
+
+  const url = `${siteUrl.replace(/\/$/, '')}/empfehlung/${code}`;
+  const grouped = code.replace(/(.{4})(?=.)/g, '$1\u2009').trim();
+
+  const announce = (msg: string, which: Copied) => {
+    setCopied(which);
+    setStatus(msg);
+    window.setTimeout(() => {
+      setCopied('idle');
+      setStatus('');
+    }, 2500);
+  };
+
+  async function copy(value: string, msg: string, which: Copied) {
     try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 2500);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        announce(msg, which);
       }
     } catch {
-      /* Browser-Berechtigung verweigert - egal */
+      /* Clipboard-Berechtigung verweigert – kein Blocker. */
     }
   }
 
-  async function nativeShare() {
-    if (typeof navigator === 'undefined' || !('share' in navigator)) return false;
-    try {
-      await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({
-        title: shareTitle,
-        text: shareText,
-        url,
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
+  const mailSubject = 'Persönliche Empfehlung für AGI Energy';
+  const mailBody = `Ich möchte dir AGI Energy empfehlen. Über diesen Link kannst du eine persönliche Energieprüfung starten:\n\n${url}\n\nMein Empfehlungscode: ${code}`;
+  const mailHref = `mailto:?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
 
-  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-  const mailHref = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareText)}`;
+  async function moreOptions() {
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({
+          title: 'AGI Energy Empfehlung',
+          text: 'Persönliche Energieprüfung bei AGI Energy starten.',
+          url,
+        });
+        return;
+      } catch {
+        /* abgebrochen oder nicht unterstützt → Fallback */
+      }
+    }
+    await copy(url, 'Link kopiert', 'url');
+  }
 
   return (
-    <div className="rounded-xl3 border border-white/15 bg-white/[0.06] backdrop-blur-md p-6 sm:p-7 text-left">
+    <div className="rounded-xl3 border border-white/15 bg-white/[0.06] backdrop-blur-md p-6 sm:p-8 text-left">
       <p className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-warmAmber/90 font-semibold mb-3">
         <span className="size-1.5 rounded-full bg-warmAmber" aria-hidden />
-        Empfehlung weitergeben
+        Empfehlungscode
       </p>
       <h2 className="font-display text-[20px] sm:text-[22px] font-semibold text-softWhite tracking-tight leading-snug">
         Ihr persönlicher Empfehlungscode
       </h2>
       <p className="mt-3 text-[14px] text-softWhite/70 leading-relaxed">
-        Wer einen Energie-Check über Ihren Link startet, erhält die gleiche persönliche Prüfung wie Sie.
-        Keine automatischen Verträge, keine Werbeanrufe.
+        Wenn Sie AGI Energy weiterempfehlen möchten, können Sie Ihren persönlichen Empfehlungscode oder
+        den Empfehlungslink weitergeben. Jede Person, die über Ihren Link einen Energie-Check startet,
+        erhält ebenfalls eine persönliche Prüfung.
+      </p>
+      <p className="mt-2 text-[13px] text-softWhite/55 leading-relaxed">
+        Eine Kontaktaufnahme erfolgt nur auf Grundlage der übermittelten Anfrage und der erteilten
+        Einwilligungen.
       </p>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div className="rounded-elo border border-white/20 bg-white/[0.08] px-4 py-3 font-mono text-[16px] tracking-[0.18em] text-softWhite">
-          {code}
-        </div>
+      {/* Code-Feld – Anzeige gruppiert, Copy nutzt den echten Code ohne Leerzeichen */}
+      <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-stretch">
         <button
           type="button"
-          onClick={copy}
-          className="rounded-elo border border-white/25 bg-white/[0.1] px-4 py-3 text-[13.5px] font-semibold text-softWhite hover:bg-white/[0.15] transition"
-          aria-live="polite"
+          onClick={() => copy(code, 'Code kopiert', 'code')}
+          title="Empfehlungscode kopieren"
+          className="rounded-elo border border-white/20 bg-white/[0.08] px-4 py-3 text-left font-mono text-[17px] tracking-[0.12em] text-softWhite hover:bg-white/[0.12] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
-          {copied ? 'Kopiert ✓' : 'Link kopieren'}
+          {grouped}
+          <span className="ml-2 align-middle text-[11px] font-sans tracking-normal text-softWhite/50">
+            {copied === 'code' ? 'kopiert ✓' : 'kopieren'}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => copy(url, 'Link kopiert', 'url')}
+          className="rounded-elo border border-white/25 bg-white/[0.1] px-4 py-3 text-[13.5px] font-semibold text-softWhite hover:bg-white/[0.16] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        >
+          {copied === 'url' ? 'Kopiert ✓' : 'Link kopieren'}
         </button>
       </div>
 
-      <p className="mt-4 text-[12.5px] text-softWhite/60 break-all">{url}</p>
+      <p className="mt-3 text-[12.5px] text-softWhite/55 break-all">{url}</p>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-elo bg-[#25D366] px-4 py-2.5 text-[13.5px] font-semibold text-white hover:brightness-110 transition"
-        >
-          <WhatsAppIcon /> WhatsApp
-        </a>
         <a
           href={mailHref}
           className="inline-flex items-center gap-2 rounded-elo border border-white/25 bg-white/[0.08] px-4 py-2.5 text-[13.5px] font-semibold text-softWhite hover:bg-white/[0.12] transition"
         >
-          <MailIcon /> E-Mail
+          <MailIcon /> Per E-Mail teilen
         </a>
         <button
           type="button"
-          onClick={async () => {
-            const ok = await nativeShare();
-            if (!ok) copy();
-          }}
+          onClick={moreOptions}
           className="inline-flex items-center gap-2 rounded-elo border border-white/25 bg-white/[0.08] px-4 py-2.5 text-[13.5px] font-semibold text-softWhite hover:bg-white/[0.12] transition"
         >
-          <ShareIcon /> Mehr Optionen
+          <ShareIcon /> Weitere Optionen
         </button>
       </div>
-    </div>
-  );
-}
 
-function WhatsAppIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.84.508 3.56 1.39 5.04L2 22l5.18-1.36A9.97 9.97 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm5.07 14.13c-.21.59-1.23 1.15-1.71 1.21-.46.06-1.03.08-1.65-.1-.38-.12-.86-.28-1.49-.55-2.62-1.13-4.33-3.77-4.46-3.95-.13-.18-1.06-1.41-1.06-2.69 0-1.28.67-1.91.91-2.17.24-.26.52-.32.7-.32.18 0 .35 0 .51.01.16.01.38-.06.6.46.21.51.73 1.76.79 1.89.06.13.1.28.02.46-.08.18-.12.29-.23.45-.11.16-.24.36-.35.49-.12.13-.24.27-.1.53.13.26.59.97 1.26 1.57.86.77 1.59.99 1.85 1.11.26.12.41.1.56-.06.15-.16.65-.76.83-1.02.18-.26.36-.21.6-.13.24.08 1.49.7 1.74.83.25.13.42.19.48.3.06.11.06.65-.15 1.24z" />
-    </svg>
+      {/* Barrierefreie Rückmeldung ohne störendes Popup */}
+      <p aria-live="polite" className="sr-only" role="status">
+        {status}
+      </p>
+    </div>
   );
 }
 

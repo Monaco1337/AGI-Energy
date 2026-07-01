@@ -130,10 +130,11 @@ export function EnergyLeadForm({
       }
       const result = await submitLandingLead(payload);
       setStatus('success');
-      if (result.referralCode) {
-        const qs = `?ref=${encodeURIComponent(result.referralCode)}`;
-        router.push(`/danke${qs}`);
-      }
+      const params = new URLSearchParams();
+      if (result.referralCode) params.set('ref', result.referralCode);
+      if (result.confirmationEmailStatus === 'sent') params.set('mail', 'sent');
+      const qs = params.toString();
+      router.push(`/danke${qs ? `?${qs}` : ''}`);
     } catch {
       setStatus('error');
       setErrors({

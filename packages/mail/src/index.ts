@@ -10,3 +10,5 @@ export {
   internalLeadMessage,
 } from './templates';
 export { sendLeadEmails } from './leadEmails';
+export { getTimeBasedGreeting } from './greeting';
+export type { GreetingInput, Salutation } from './greeting';

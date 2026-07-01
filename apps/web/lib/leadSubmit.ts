@@ -43,6 +43,8 @@ export interface LeadSubmitResult {
   referralCode?: string;
   /** ID des Leads (rein informativ; nicht sicherheitskritisch). */
   id?: string;
+  /** Status der Kundenbestätigungsmail – nur "sent", wenn wirklich versendet. */
+  confirmationEmailStatus?: 'sent' | 'unsent';
 }
 
 /**
@@ -86,8 +88,16 @@ export async function submitLandingLead(payload: LeadPayload): Promise<LeadSubmi
   }
 
   try {
-    const data = (await res.json()) as { id?: string; referralCode?: string };
-    return { id: data.id, referralCode: data.referralCode };
+    const data = (await res.json()) as {
+      id?: string;
+      referralCode?: string;
+      confirmationEmailStatus?: 'sent' | 'unsent';
+    };
+    return {
+      id: data.id,
+      referralCode: data.referralCode,
+      confirmationEmailStatus: data.confirmationEmailStatus,
+    };
   } catch {
     return {};
   }

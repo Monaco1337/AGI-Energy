@@ -97,7 +97,7 @@ export async function sendLeadEmails(
   // 1) Kundenbestätigung – nur wenn E-Mail vorhanden und noch nicht gesendet.
   if (lead.email && !status.confirmationSentAt) {
     try {
-      const msg = leadConfirmationMessage(lead);
+      const msg = leadConfirmationMessage(lead, siteUrl);
       await resendSend(cfg.apiKey, {
         from: cfg.from,
         to: [lead.email],
