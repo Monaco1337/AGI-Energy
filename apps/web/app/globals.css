@@ -10,6 +10,10 @@ body {
   font-family: var(--agi-font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Sicherheitsnetz: verhindert horizontales Scrollen/weiße Ränder auf Mobile,
+     falls irgendein Element (Button, Karte, Icon) versehentlich zu breit wird. */
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Header-Zeile (ohne Safe-Area) – Hero bis unter transparenten Navbar-Bereich */
@@ -281,9 +285,10 @@ a {
   outline-offset: 2px;
 }
 
-/* Header-CTA – kompakte Premium-Variante des Hero-CTA */
+/* Header-CTA – kompakte Premium-Variante des Hero-CTA.
+   Kein "display" hier: das steuert bewusst Tailwind (hidden/sm:inline-flex/flex),
+   sonst überschreibt diese Regel (ohne Media Query) das "hidden"-Utility auf Mobile. */
 .header-cta {
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;

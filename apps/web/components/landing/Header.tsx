@@ -207,7 +207,7 @@ export function Header() {
                   setOpen(false);
                   scrollToEnergyForm();
                 }}
-                className="header-cta w-full justify-center"
+                className="header-cta flex w-full justify-center"
                 aria-label={headerCtaLabel}
               >
                 <span>{headerCtaLabel}</span>
