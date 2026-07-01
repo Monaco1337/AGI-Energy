@@ -46,7 +46,7 @@ export function EnergyLeadForm({
   const [phone, setPhone] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [zip, setZip] = React.useState('');
-  const [annualConsumptionKwh, setAnnualConsumptionKwh] = React.useState('');
+  const annualConsumptionKwh = '';
   const [file, setFile] = React.useState<File | null>(null);
   const [consent, setConsent] = React.useState(false);
   const [whatsappConsent, setWhatsappConsent] = React.useState(false);
@@ -76,7 +76,6 @@ export function EnergyLeadForm({
     setPhone('');
     setEmail('');
     setZip('');
-    setAnnualConsumptionKwh('');
     setFile(null);
     setConsent(false);
     setWhatsappConsent(false);
@@ -157,9 +156,9 @@ export function EnergyLeadForm({
       }
     >
       {status === 'success' ? (
-        <div className="p-7 sm:p-10 text-center space-y-5">
-          <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-cyan/15 text-cyanDeep">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <div className="px-6 py-10 sm:px-8 sm:py-12 text-center space-y-5">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[rgba(57,216,232,0.12)] text-cyanDeep">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
                 d="M20 6L9 17l-5-5"
                 stroke="currentColor"
@@ -169,108 +168,106 @@ export function EnergyLeadForm({
               />
             </svg>
           </div>
-          <h2 className="font-display text-2xl sm:text-[26px] font-semibold text-navy tracking-tight">
-            {c.successTitle}
-          </h2>
-          <p className="text-[14.5px] text-slate leading-relaxed max-w-md mx-auto">{c.successText}</p>
-          <Button type="button" variant="primary" size="lg" className="mt-2" onClick={reset}>
+          <div>
+            <h2 className="font-display text-[22px] sm:text-[26px] font-semibold text-[rgba(245,250,255,0.95)] tracking-tight">
+              {c.successTitle}
+            </h2>
+            <p className="mt-2 text-[13.5px] text-slate/80 leading-relaxed max-w-sm mx-auto">
+              {c.successText}
+            </p>
+          </div>
+          <Button type="button" variant="primary" size="lg" className="mt-1" onClick={reset}>
             {c.successCta}
           </Button>
         </div>
       ) : (
-        <form onSubmit={onSubmit} className="p-6 sm:p-7 lg:p-[26px]" noValidate>
-          <p className="text-[13.5px] sm:text-[14px] text-slate leading-[1.5] mb-4 lg:mb-[18px]">
+        <form onSubmit={onSubmit} className="p-5 sm:p-6" noValidate>
+
+          {/* Subline */}
+          <p className="text-[13px] text-slate/70 leading-[1.5] mb-5">
             {c.cardSubline}
           </p>
 
+          {/* Fehler-Banner */}
           {errors.general && (
             <div
               role="alert"
-              className="mb-4 rounded-xl border border-error/30 bg-error/5 px-4 py-3 text-[13.5px] text-error"
+              className="mb-4 rounded-xl border border-error/30 bg-error/[0.06] px-4 py-3 text-[13px] text-error"
             >
               {errors.general}
             </div>
           )}
 
-          {/* Kategorie-Auswahl – kompakt */}
-          <div className="mb-[18px]">
-            <p className="text-[11px] font-medium text-slate uppercase tracking-[0.14em] mb-2">
+          {/* ① Bereich */}
+          <fieldset className="mb-5 border-0 p-0 m-0">
+            <legend className="text-[10.5px] font-semibold text-slate/55 uppercase tracking-[0.15em] mb-2.5">
               Bereich
-            </p>
+            </legend>
             <CategorySelector value={category} onChange={setCategory} disabled={locked} />
             {errors.category && (
-              <p className="mt-1.5 text-[13px] text-error" role="alert">
+              <p className="mt-1.5 text-[12.5px] text-error" role="alert">
                 {errors.category}
+              </p>
+            )}
+          </fieldset>
+
+          {/* ② Kontaktfelder – 2-spaltig ab sm */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <Field
+              label="Name"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={errors.name}
+              disabled={locked}
+              required
+            />
+            <Field
+              label="Telefonnummer"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              error={errors.phone}
+              disabled={locked}
+              required
+            />
+            <Field
+              label="E-Mail-Adresse"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={errors.email}
+              disabled={locked}
+              required
+            />
+            <Field
+              label="PLZ"
+              autoComplete="postal-code"
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
+              error={errors.zip}
+              disabled={locked}
+              required
+            />
+          </div>
+
+          {/* ③ Upload – volle Breite, klar optional */}
+          <div className="mb-5">
+            <UploadDropzone file={file} onFile={setFile} error={errors.file} disabled={locked} />
+            {!file && (
+              <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-slate/50 leading-[1.4]">
+                <ShieldIcon />
+                <span>Nur zur Bearbeitung Ihrer Anfrage · vertraulich behandelt.</span>
               </p>
             )}
           </div>
 
-          {/* Kontaktdaten + optionaler Upload dezent daneben */}
-          <div className="grid gap-3 lg:grid-cols-[1fr_minmax(220px,0.72fr)] lg:items-start lg:gap-4 mb-[14px]">
-            <div className="grid sm:grid-cols-2 gap-3">
-              <Field
-                label="Name"
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                error={errors.name}
-                disabled={locked}
-                required
-              />
-              <Field
-                label="Telefonnummer"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                error={errors.phone}
-                disabled={locked}
-                required
-              />
-              <Field
-                label="E-Mail-Adresse"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={errors.email}
-                disabled={locked}
-                required
-              />
-              <Field
-                label="PLZ"
-                autoComplete="postal-code"
-                value={zip}
-                onChange={(e) => setZip(e.target.value)}
-                error={errors.zip}
-                disabled={locked}
-                required
-              />
-              <Field
-                label={c.annualConsumptionLabel}
-                type="text"
-                inputMode="numeric"
-                placeholder={c.annualConsumptionPlaceholder}
-                value={annualConsumptionKwh}
-                onChange={(e) => setAnnualConsumptionKwh(e.target.value)}
-                error={errors.annualConsumptionKwh}
-                disabled={locked}
-              />
-            </div>
-
-            <div className="lg:pt-[26px]">
-              <UploadDropzone file={file} onFile={setFile} error={errors.file} disabled={locked} />
-              <p className="mt-2 text-[10.5px] text-slate/95 leading-[1.45]">{c.uploadOfferHint}</p>
-              <p className="mt-1.5 flex items-start gap-1.5 text-[10.5px] text-slate/80 leading-[1.4]">
-                <ShieldIcon />
-                <span>{c.uploadTrustLine}</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-[14px] mb-[16px]">
+          {/* ④ Einwilligungen */}
+          <div className="mb-5 space-y-3.5 border-t border-white/[0.06] pt-5">
             <Checkbox
               checked={consent}
               onChange={(e) => setConsent(e.target.checked)}
@@ -283,45 +280,47 @@ export function EnergyLeadForm({
                     className="text-cyanDeep underline underline-offset-2 font-medium hover:text-cyan transition-colors"
                   >
                     Datenschutzerklärung
-                  </Link>
-                  {' '}
+                  </Link>{' '}
                   gelesen und bin damit einverstanden, dass meine Angaben zur
                   Bearbeitung meiner Anfrage zur persönlichen Energieprüfung
-                  verarbeitet werden. Mir ist bekannt, dass ich zur Bearbeitung
-                  meiner Anfrage per Telefon oder E-Mail kontaktiert werden kann.
+                  verarbeitet werden. Mir ist bekannt, dass ich per Telefon oder
+                  E-Mail kontaktiert werden kann.
                 </>
               }
             />
             {errors.consent && (
-              <p className="mt-1.5 text-[13px] text-error" role="alert">
+              <p className="text-[12.5px] text-error" role="alert">
                 {errors.consent}
               </p>
             )}
-            <div className="mt-4">
-              <Checkbox
-                checked={whatsappConsent}
-                onChange={(e) => setWhatsappConsent(e.target.checked)}
-                disabled={locked}
-                label={CONSENT_TEXTS.whatsapp}
-              />
-            </div>
+            <Checkbox
+              checked={whatsappConsent}
+              onChange={(e) => setWhatsappConsent(e.target.checked)}
+              disabled={locked}
+              label={CONSENT_TEXTS.whatsapp}
+            />
           </div>
 
-          <Button type="submit" variant="primary" size="lg" fullWidth disabled={locked} className="h-[54px] text-[14.5px]">
+          {/* ⑤ Submit */}
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            disabled={locked}
+            className="h-[52px] text-[14.5px] tracking-[-0.01em]"
+          >
             {busy ? c.submitting : 'Kostenlose Energieprüfung anfragen'}
           </Button>
 
-          <p className="mt-2.5 text-center text-[11.5px] text-slate leading-[1.45]">
-            Mit dem Absenden der Anfrage werden Ihre Angaben zur Bearbeitung Ihrer
-            Energieprüfungsanfrage verarbeitet. Weitere Informationen finden Sie in
-            unserer{' '}
+          <p className="mt-3 text-center text-[11px] text-slate/45 leading-[1.5]">
+            Mit dem Absenden werden Ihre Angaben zur Anfrage verarbeitet.{' '}
             <Link
               href="/datenschutz"
-              className="text-cyanDeep underline underline-offset-2 font-medium hover:text-cyan transition-colors"
+              className="text-slate/60 underline underline-offset-2 hover:text-cyanDeep transition-colors"
             >
               Datenschutzerklärung
             </Link>
-            .
           </p>
         </form>
       )}
