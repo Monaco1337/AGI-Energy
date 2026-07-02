@@ -59,7 +59,7 @@ export const COMPANY_INFO = {
     },
     {
       name: 'Resend (resend.com)',
-      purpose: 'Transaktionale E-Mails (Lead-Bestaetigung, Newsletter-DOI)',
+      purpose: 'Transaktionale E-Mails (Lead-Bestaetigung)',
       location: 'EU / USA',
       basis: 'EU-Standardvertragsklauseln (nur wenn aktiviert)',
     },

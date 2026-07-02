@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
-import NewsletterForm from '@/components/landing/NewsletterForm';
 import { CookieSettingsLink } from '@/components/landing/CookieSettingsLink';
 import { COMPANY_INFO, displayField, isPlaceholder } from '@/data/companyInfo';
 
@@ -60,33 +59,6 @@ export function Footer() {
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
         aria-hidden
       />
-
-      {/* Newsletter-CTA-Band */}
-      <div className="relative border-b border-white/[0.06]">
-        <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12 py-12 lg:py-14 grid gap-8 lg:gap-12 lg:grid-cols-[1.1fr_1fr] items-start">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#39d8e8]">
-              Energie-Briefing
-            </p>
-            <h3 className="mt-3 font-display text-[24px] sm:text-[28px] lg:text-[32px] font-semibold leading-[1.15] tracking-tight text-white">
-              Marktbewegungen verstehen. Bevor sie auf Ihrer Rechnung stehen.
-            </h3>
-            <p className="mt-4 text-[15px] sm:text-[16px] leading-[1.7] text-[rgba(235,245,250,0.62)] max-w-[520px]">
-              Ein kompakter, persönlicher Briefing-Newsletter zu Strom-, Gas- und
-              Solar-Themen. Maximal 2&nbsp;Mails pro Monat. Jederzeit abbestellbar.
-              Keine Werbe-Hetze.
-            </p>
-            <ul className="mt-5 grid gap-2 text-[13.5px] text-[rgba(235,245,250,0.7)]">
-              <FooterCheck>Marktbewegungen verständlich erklärt</FooterCheck>
-              <FooterCheck>Aktuelle Spar-Hebel für Haushalt &amp; Gewerbe</FooterCheck>
-              <FooterCheck>Kein externes Werbe-Tracking, kein Verkauf von Daten</FooterCheck>
-            </ul>
-          </div>
-          <div className="rounded-eloLg border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-5 sm:p-6 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.6)]">
-            <NewsletterForm variant="inline" source="footer" />
-          </div>
-        </div>
-      </div>
 
       <div
         className="
@@ -184,7 +156,6 @@ export function Footer() {
             <li><Link className={`${linkCls} group`} href="/glossar">Glossar<ArrowIcon /></Link></li>
             <li><Link className={`${linkCls} group`} href="/fragen-antworten">Fragen &amp; Antworten<ArrowIcon /></Link></li>
             <li><Link className={`${linkCls} group`} href="/energieberatung">Städte-Übersicht<ArrowIcon /></Link></li>
-            <li><Link className={`${linkCls} group`} href="/newsletter">Newsletter<ArrowIcon /></Link></li>
           </ul>
         </nav>
 
@@ -235,28 +206,6 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  );
-}
-
-function FooterCheck({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-2.5">
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="mt-1 shrink-0 text-[#39d8e8]"
-        aria-hidden
-      >
-        <path d="M5 13l4 4L19 7" />
-      </svg>
-      <span>{children}</span>
-    </li>
   );
 }
 
