@@ -101,7 +101,6 @@ export default async function AdminCockpit() {
 
   // Partner-Sicht: Daten beschränken
   const myLeads = isPartner ? allLeads.filter((l) => l.assignedPartnerId === partnerId) : allLeads;
-  const myDeals = isPartner ? allDeals.filter((d) => d.partnerId === partnerId) : allDeals;
   const myCommissions = isPartner ? allCommissions.filter((c) => c.partnerId === partnerId) : allCommissions;
   const myTasks = isPartner
     ? allTasks.filter((t) => t.ownerId === session.userId || t.partnerId === partnerId)
@@ -119,6 +118,15 @@ export default async function AdminCockpit() {
   const callNow = myLeads.filter((l) => l.status === 'Heute anrufen' || (l.status === 'Neu' && (l.leadColor === 'red' || l.leadColor === 'orange'))).length;
   const closed = myLeads.filter((l) => l.status === 'Abgeschlossen').length;
   const conv = myLeads.length > 0 ? closed / myLeads.length : 0;
+  // Abschlüsse des laufenden Monats – direkt aus dem Lead-Status abgeleitet,
+  // damit die Kachel sofort hochzählt, sobald ein Lead auf "Abgeschlossen"
+  // gesetzt wird (keine separate Deal-Bestätigung nötig).
+  const nowRef = new Date();
+  const closedThisMonth = myLeads.filter((l) => {
+    if (l.status !== 'Abgeschlossen') return false;
+    const dt = new Date(l.closedAt ?? l.updatedAt);
+    return dt.getFullYear() === nowRef.getFullYear() && dt.getMonth() === nowRef.getMonth();
+  }).length;
   const openCommission = myCommissions
     .filter((c) => c.status === 'pending' || c.status === 'approved')
     .reduce((sum, c) => sum + (c.amount ?? 0), 0);
@@ -236,7 +244,7 @@ export default async function AdminCockpit() {
         { label: 'Neue Leads', value: myLeads.filter((l) => l.status === 'Neu').length, tone: 'cyan', href: '/admin/meine-leads' },
         { label: 'Heute anrufen', value: callNow, tone: 'critical', href: '/admin/meine-leads' },
         { label: 'In Bearbeitung', value: inProgress, href: '/admin/meine-leads' },
-        { label: 'Abschlüsse Mt.', value: myDeals.filter((d) => d.status === 'confirmed' && new Date(d.closedAt ?? d.updatedAt).getMonth() === new Date().getMonth()).length, tone: 'success', href: '/admin/abschluesse' },
+        { label: 'Abschlüsse Mt.', value: closedThisMonth, tone: 'success', href: '/admin/abschluesse' },
         { label: 'Provision offen', value: fmtEur(openCommission), tone: 'gold', href: '/admin/provisionen' },
         { label: 'Conversion', value: `${Math.round(conv * 100)}%`, tone: 'cyan', href: '/admin/performance' },
       ];

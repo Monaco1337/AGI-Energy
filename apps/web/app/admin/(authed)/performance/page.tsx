@@ -36,10 +36,9 @@ function fmtReaction(ms: number | null): string {
 export default async function PerformancePage() {
   const session = await requireSession();
   const storage = getStorage();
-  const [partners, leads, deals, commissions] = await Promise.all([
+  const [partners, leads, commissions] = await Promise.all([
     storage.listPartners(),
     storage.listLeads(),
-    storage.listDeals(),
     storage.listCommissions(),
   ]);
 
@@ -64,13 +63,11 @@ export default async function PerformancePage() {
       ? reactionTimes.reduce((s, n) => s + n, 0) / reactionTimes.length
       : null;
 
-    const closedMonth = deals.filter(
-      (d) =>
-        d.partnerId === p.id &&
-        d.status === 'confirmed' &&
-        new Date(d.closedAt ?? d.updatedAt).getFullYear() === now.getFullYear() &&
-        new Date(d.closedAt ?? d.updatedAt).getMonth() === now.getMonth(),
-    ).length;
+    const closedMonth = myLeads.filter((l) => {
+      if (l.status !== 'Abgeschlossen') return false;
+      const dt = new Date(l.closedAt ?? l.updatedAt);
+      return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth();
+    }).length;
     const pendingCom = commissions
       .filter((c) => c.partnerId === p.id && (c.status === 'pending' || c.status === 'approved'))
       .reduce((sum, c) => sum + (c.amount ?? 0), 0);

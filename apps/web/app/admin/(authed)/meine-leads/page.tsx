@@ -29,23 +29,24 @@ export default async function MyLeadsPage() {
   const inProgress = active.filter((l) => !PRIORITY_STATUSES.includes(l.status));
   const closed = leads.filter((l) => l.status === 'Abgeschlossen').length;
   const conv = leads.length > 0 ? closed / leads.length : 0;
+  // Abschlüsse des laufenden Monats direkt aus dem Lead-Status – zählt sofort
+  // hoch, sobald ein Lead auf "Abgeschlossen" gesetzt wird.
+  const nowRef = new Date();
+  const closedThisMonth = leads.filter((l) => {
+    if (l.status !== 'Abgeschlossen') return false;
+    const dt = new Date(l.closedAt ?? l.updatedAt);
+    return dt.getFullYear() === nowRef.getFullYear() && dt.getMonth() === nowRef.getMonth();
+  }).length;
 
   // Provisionen + offene Tasks
-  const [tasks, commissions, deals] = await Promise.all([
+  const [tasks, commissions] = await Promise.all([
     storage.listTasks(partnerId ? { partnerId: partnerId as never } : {}),
     storage.listCommissions(partnerId ? { partnerId: partnerId as never } : {}),
-    storage.listDeals(partnerId ? { partnerId: partnerId as never } : {}),
   ]);
   const openTasks = tasks.filter((t) => t.status !== 'done').length;
   const openCom = commissions
     .filter((c) => c.status === 'pending' || c.status === 'approved')
     .reduce((sum, c) => sum + (c.amount ?? 0), 0);
-  const closedThisMonth = deals.filter((d) => {
-    if (d.status !== 'confirmed') return false;
-    const dt = new Date(d.closedAt ?? d.updatedAt);
-    const now = new Date();
-    return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth();
-  }).length;
 
   return (
     <div className="space-y-6">
